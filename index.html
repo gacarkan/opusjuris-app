@@ -55,6 +55,9 @@
   .tag { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; background: var(--line); color: var(--muted); }
   .tag.paid, .tag.active { background: var(--ok-bg); color: var(--ok); } .tag.open, .tag.past_due, .tag.unpaid { background: var(--warn-bg); color: var(--warn); } .tag.uncollectible, .tag.canceled { background: var(--bad-bg); color: var(--bad); }
   .empty { color: var(--muted); }
+  .big { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .facts { display: flex; gap: 28px; } .facts .k { display: block; font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); } .facts b { font-size: 1rem; }
+  .warn-text { color: var(--bad); }
   @media (max-width: 600px) { .hide-sm { display: none; } }
 </style>
 </head>
@@ -63,7 +66,7 @@
     <div class="box">
       <h1>Opus Juris Accounts</h1>
       <form id="form-ref">
-        <p>Sign in to manage your firm's payment method and invoices.</p>
+        <p>Sign in to see your firm's usage and tokens, and to manage its payment method and invoices.</p>
         <label for="ref">Account Ref No</label>
         <input id="ref" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
         <label for="email">Admin email</label>
@@ -90,6 +93,14 @@
         <div class="sub" id="refline"></div>
       </section>
       <section class="card">
+        <h2>Usage</h2>
+        <div class="row">
+          <div><div class="big" id="tokens-left"></div><div class="note" id="tokens-note"></div><div class="note warn-text" id="tokens-warn"></div></div>
+          <div class="facts"><div><span class="k">Seats</span><b id="seats"></b></div><div><span class="k">Plan</span><b id="plan"></b></div></div>
+        </div>
+        <div class="note">Tokens are drawn down as the firm uses drafting, analysis and chat. They do not reset; more can be added to the account at any time.</div>
+      </section>
+      <section class="card">
         <h2>Payment method</h2>
         <div class="row">
           <div><div class="method" id="method"></div><div class="note" id="method-note"></div></div>
@@ -109,7 +120,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <script src="config.js?v=1"></script>
-  <script src="app.js?v=1"></script>
+  <script src="config.js?v=2"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>

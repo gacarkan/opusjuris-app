@@ -1,13 +1,15 @@
-// Opus Juris Accounts: the page a firm's administrator uses to see their
-// billing and add a card or bank account. Sign in is the Account Ref No and
-// admin email plus a one-time code emailed to that address; everything else
-// goes through the `billing` edge function, which checks the signed-in email
-// against the account. Card and bank details are entered on Stripe's own
-// page, never here.
+// Opus Juris Accounts: the page a firm's administrator uses to see the firm's
+// usage, tokens and seats, their billing, and to add a card or bank account.
+// Sign in is the Account Ref No and admin email plus a one-time code emailed
+// to that address (Supabase Auth); everything else goes to the back end
+// (Python on PythonAnywhere, the opusjuris-backend repo), which checks the
+// signed-in email against the account. Card and bank details are entered on
+// Stripe's own page, never here.
 (function () {
   "use strict";
   const cfg = window.BILLING_CONFIG || {};
   const sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  const API = String(cfg.apiBase || "").replace(/\/+$/, "");
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const money = (cents, cur) => new Intl.NumberFormat("en-US", { style: "currency", currency: (cur || "usd").toUpperCase() }).format((cents || 0) / 100);
@@ -19,18 +21,21 @@
   const setRef = (v) => { try { v ? sessionStorage.setItem(REF_KEY, v) : sessionStorage.removeItem(REF_KEY); } catch (e) { /* private mode: the ref is asked for again */ } };
 
   async function call(action, extra, authed) {
-    const headers = { "Content-Type": "application/json", apikey: cfg.supabaseAnonKey };
+    const headers = { "Content-Type": "application/json" };
     if (authed) {
       const { data } = await sb.auth.getSession();
       if (!data || !data.session) throw new Error("expired");
       headers.Authorization = "Bearer " + data.session.access_token;
     }
-    const res = await fetch(cfg.supabaseUrl.replace(/\/+$/, "") + "/functions/v1/billing", { method: "POST", headers, body: JSON.stringify(Object.assign({ action }, extra || {})) });
+    let res;
+    try { res = await fetch(API + "/api/" + action, { method: "POST", headers, body: JSON.stringify(extra || {}) }); }
+    catch (e) { throw new Error("The accounts service could not be reached. Try again in a moment."); }
     const j = await res.json().catch(() => ({}));
     if (res.status === 401) throw new Error("expired");
     if (!res.ok || !j.ok) throw new Error(j.error || "Something went wrong. Please try again.");
     return j;
   }
+  const tokens = (v) => (Math.round((Number(v) || 0) * 100) / 100).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
   // ── sign in ──
   function showSignin(msg) {
@@ -94,6 +99,17 @@
     $("me").textContent = a.admin_email;
     $("firm").textContent = a.firm_name;
     $("refline").textContent = "Account Ref No " + a.ref_no;
+    // Usage: tokens left, seats, what the firm is charged for (the back end
+    // leaves out what it cannot read; nothing is invented here).
+    const u = j.usage || {};
+    const t = u.tokens, s = u.seats;
+    const onTokens = t && t.left !== null && t.left !== undefined;
+    $("tokens-left").textContent = onTokens ? tokens(t.left) : "";
+    $("tokens-note").textContent = onTokens ? "tokens left of " + tokens(t.granted) + " (" + tokens(t.used) + " used; a token is $" + tokens(t.token_usd) + " of usage)" : "This account is not on tokens yet.";
+    $("tokens-warn").textContent = onTokens && Number(t.left) <= 0 ? "No tokens left: drafting, analysis and chat are paused until more tokens are added." : "";
+    $("seats").textContent = s && s.seats ? String(s.used) + " of " + String(s.seats) : (s ? String(s.used) + " in use" : "");
+    const lic = u.license;
+    $("plan").textContent = lic ? (String(lic.plan || "").replace(/^./, (c) => c.toUpperCase()) + (lic.status && lic.status !== "active" ? " (" + lic.status + ")" : "") + (lic.expires_at ? ", renews " + new Date(lic.expires_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "")) : "";
     const m = j.method;
     if (!m) { $("method").textContent = "No payment method on file"; $("method-note").textContent = "Add a card or bank account so your invoices can be paid."; $("add").textContent = "Add card or bank account"; }
     else {

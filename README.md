@@ -1,43 +1,33 @@
 # Opus Juris Accounts portal
 
-Where a firm's administrator signs in to see their billing and add a card or
-bank account (ACH). One static page, no build, published to GitHub Pages from
-`main` at pay.opusjuris.com.
+Where a firm's administrator signs in to see the firm's usage, tokens and
+seats, and to manage billing (a card or bank account, invoices). One static
+page, no build, published to GitHub Pages from `main` at app.opusjuris.com.
+The Sign in link on www.opusjuris.com points here.
 
 - `index.html`, `app.js`: the page. `config.js`: the vendor project's public URL
-  and anon key (public by design).
+  and anon key (public by design) and `apiBase`, the back end's address.
 - Sign in: Account Ref No + admin email, then a one-time code emailed to that
-  address. The code is checked by Supabase Auth; the `billing` function then
-  checks that the signed-in email is the admin email of that account.
+  address. The code is checked by Supabase Auth; the back end then checks that
+  the signed-in email is the admin email of that account.
+- The back end is Python on PythonAnywhere: the `opusjuris-backend` repo
+  (Flask, `/api/...`). The database stays Supabase: the vendor project holds
+  the accounts (`portal_accounts`, migration 206 in the app repo); each firm's
+  own project answers for its usage, tokens and seats.
 - Card and bank numbers are entered on a Stripe Checkout page and never reach
-  this site or our database. Only Stripe's customer id is stored.
-
-The back end lives in the app repo: `supabase/migrations/206_accounts_portal.sql`
-(the `portal_accounts` table) and `supabase/functions/billing`.
+  this site, the back end or the database. Only Stripe's customer id is stored.
 
 ## Go live, in order
 
-1. **Stripe.** Create the account. Turn on ACH Direct Debit under Settings,
-   Payment methods. Start in test mode: use the `sk_test_` secret key.
-2. **Vendor Supabase project.** Run migration 206. Set the function secrets
-   (`supabase secrets set STRIPE_SECRET_KEY=sk_test_... BILLING_PORTAL_URL=https://pay.opusjuris.com`)
-   and deploy: `supabase functions deploy billing --project-ref <ref> --no-verify-jwt`.
-3. **The sign-in email.** Auth must email a code, not a link: in the project's
-   Auth, Email templates, Magic Link, put `{{ .Token }}` in the body (for
-   example "Your Opus Juris Accounts code is {{ .Token }}"). The built-in
-   mailer is limited to a few emails an hour, so set a custom SMTP sender
-   (Resend, Postmark, Google Workspace) under Auth, SMTP settings.
-4. **This site.** Create a GitHub repo, push `main` (the workflow publishes it),
-   set the custom domain in the repo's Pages settings, and add a CNAME record
-   at GoDaddy: `pay` pointing to `<your-github-user>.github.io`.
-5. **First account.** Insert a row in `portal_accounts` (see the migration), sign
-   in, add a test card (4242 4242 4242 4242), then create a subscription or an
-   invoice for that customer in Stripe and watch it show here.
-6. **Live.** Swap in the `sk_live_` key and repeat step 5 with a real card.
-
-## Billing in Stripe
-
-We create subscriptions and invoices in the Stripe dashboard. A subscription or
-invoice with "charge automatically" collection uses the payment method the
-firm saved here. The portal shows the subscription, the invoices, and a Pay
-button on any open invoice.
+1. **Back end.** Follow the README in `opusjuris-backend` (PythonAnywhere web
+   app, `.env`, reload). Put its address in `config.js` as `apiBase`.
+2. **Vendor Supabase project.** Run migration 206 (the accounts table) and
+   create the first account by hand (the INSERT in the migration's header).
+   Auth must email a code, not a link: Authentication, Email Templates, Magic
+   Link, `{{ .Token }}` in the body.
+3. **This page.** Push `main`. In the repo's Settings, Pages: source `main`,
+   custom domain `app.opusjuris.com` (the CNAME file sets it), enforce HTTPS
+   once the certificate is issued.
+4. **DNS at GoDaddy.** A CNAME record: host `app`, value `gacarkan.github.io`.
+5. **Stripe.** Test mode first (`sk_test_` in the back end's `.env`), then the
+   live key.
