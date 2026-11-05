@@ -98,7 +98,7 @@
     const a = j.account;
     $("me").textContent = a.admin_email;
     $("firm").textContent = a.firm_name;
-    $("refline").textContent = "Account Ref No " + a.ref_no;
+    $("refline").textContent = "Account number " + a.ref_no;
     // Usage: tokens left, seats, what the firm is charged for (the back end
     // leaves out what it cannot read; nothing is invented here).
     const u = j.usage || {};

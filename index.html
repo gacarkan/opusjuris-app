@@ -22,16 +22,24 @@
   .link { background: none; border: 0; padding: 0; color: var(--blue); cursor: pointer; font-weight: 600; text-decoration: underline; }
 
   /* sign in */
-  #signin { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
-  .box { width: 100%; max-width: 400px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 28px 24px; }
-  .box h1 { font-size: 1.35rem; margin: 0 0 4px; letter-spacing: -0.01em; }
-  .box p { margin: 0 0 14px; color: var(--muted); font-size: .92rem; }
-  .box label { display: block; font-size: .8rem; font-weight: 600; margin: 14px 0 5px; }
-  .box input { width: 100%; padding: 11px 12px; border: 1px solid var(--field); border-radius: 8px; background: var(--bg); color: var(--ink); }
-  .box input.code { letter-spacing: .4em; font-size: 1.2rem; text-align: center; }
-  .box .btn { width: 100%; margin-top: 18px; }
+  #signin { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 32px 16px; }
+  .brand img { display: block; height: 34px; width: auto; }
+  .box { width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 32px 28px 28px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06); }
+  .box h1 { font-size: 1.45rem; margin: 0 0 4px; letter-spacing: -0.015em; }
+  .box p { margin: 0 0 20px; color: var(--muted); font-size: .92rem; }
+  .box label { display: block; font-size: .82rem; font-weight: 600; margin: 14px 0 6px; }
+  .box input { width: 100%; padding: 11px 12px; border: 1px solid var(--field); border-radius: 8px; background: var(--card); color: var(--ink); transition: border-color .12s, box-shadow .12s; }
+  .box input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18); }
+  .box input.code { letter-spacing: .35em; font-size: 1.25rem; text-align: center; font-variant-numeric: tabular-nums; }
+  .box .btn { width: 100%; margin-top: 22px; padding: 12px 20px; }
   .box .err { color: var(--bad); font-size: .85rem; margin-top: 12px; min-height: 1.2em; }
-  .box .alt { margin-top: 14px; font-size: .88rem; text-align: center; color: var(--muted); }
+  .box .err:empty { margin-top: 0; min-height: 0; }
+  .box .alt { margin-top: 16px; font-size: .88rem; text-align: center; }
+  .box .alt .link { text-decoration: none; }
+  .box .alt .link:hover { text-decoration: underline; }
+  .foot { font-size: .82rem; color: var(--muted); display: flex; gap: 16px; }
+  .foot a { color: inherit; text-decoration: none; }
+  .foot a:hover { text-decoration: underline; }
 
   /* the account */
   header { background: var(--card); border-bottom: 1px solid var(--line); }
@@ -63,25 +71,28 @@
 </head>
 <body>
   <section id="signin" class="hidden">
+    <a class="brand" href="https://opusjuris.com" aria-label="Opus Juris"><img src="assets/logo.png" alt="Opus Juris"></a>
     <div class="box">
-      <h1>Opus Juris Accounts</h1>
       <form id="form-ref">
-        <p>Sign in to see your firm's usage and tokens, and to manage its payment method and invoices.</p>
-        <label for="ref">Account Ref No</label>
+        <h1>Sign in</h1>
+        <p>Your firm's Opus Juris account.</p>
+        <label for="ref">Account number</label>
         <input id="ref" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
-        <label for="email">Admin email</label>
+        <label for="email">Email</label>
         <input id="email" type="email" autocomplete="email" required>
-        <button class="btn" id="send">Email me a code</button>
+        <button class="btn" id="send">Continue</button>
       </form>
       <form id="form-code" class="hidden">
-        <p>If those details match an account, a code is on its way to <b id="sent-to"></b>. Enter it below.</p>
+        <h1>Check your email</h1>
+        <p>We sent a sign-in code to <b id="sent-to"></b>.</p>
         <label for="code">Code</label>
         <input id="code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required>
         <button class="btn" id="verify">Sign in</button>
-        <div class="alt"><button type="button" class="link" id="back">Start over</button></div>
+        <div class="alt"><button type="button" class="link" id="back">Use a different email</button></div>
       </form>
       <div class="err" id="signin-err" role="alert"></div>
     </div>
+    <div class="foot"><a href="https://opusjuris.com">opusjuris.com</a><a href="https://opusjuris.com/privacy">Privacy</a><a href="mailto:support@opusjuris.com">Help</a></div>
   </section>
 
   <div id="app" class="hidden">
@@ -121,6 +132,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
