@@ -30,7 +30,13 @@
   .box label { display: block; font-size: .82rem; font-weight: 600; margin: 14px 0 6px; }
   .box input { width: 100%; padding: 11px 12px; border: 1px solid var(--field); border-radius: 8px; background: var(--card); color: var(--ink); transition: border-color .12s, box-shadow .12s; }
   .box input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18); }
-  .box input.code { letter-spacing: .35em; font-size: 1.25rem; text-align: center; font-variant-numeric: tabular-nums; }
+  /* the code: six boxes, one digit each, as the app's own code screens draw them */
+  .code-row { display: flex; gap: 8px; justify-content: space-between; margin-top: 4px; }
+  .code-row input { width: 48px; height: 54px; text-align: center; font-size: 19px; font-weight: 600; font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--ink); border: 1px solid var(--field); border-radius: 8px; background: var(--card); padding: 0; transition: border-color .12s ease; }
+  .code-row input.filled { border-color: var(--blue); }
+  .code-row input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18); }
+  .box .btn:disabled { background: #93c5fd; opacity: 1; }
+  .quiet-link { color: var(--muted); font-weight: 500; font-size: .82rem; }
   .box .btn { width: 100%; margin-top: 22px; padding: 12px 20px; }
   .box .err { color: var(--bad); font-size: .85rem; margin-top: 12px; min-height: 1.2em; }
   .box .err:empty { margin-top: 0; min-height: 0; }
@@ -103,11 +109,10 @@
       </form>
       <form id="form-code" class="hidden">
         <h1>Check your email</h1>
-        <p>We sent a sign-in code to <b id="sent-to"></b>.</p>
-        <label for="code">Code</label>
-        <input id="code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required>
-        <button class="btn" id="verify">Sign in</button>
-        <div class="alt"><button type="button" class="link" id="back">Use a different email</button></div>
+        <p>Enter the six digits we sent to <b id="sent-to"></b>.</p>
+        <div class="code-row" id="code-row" aria-label="Sign-in code"></div>
+        <button class="btn" id="verify" disabled>Sign in</button>
+        <div class="alt"><button type="button" class="link quiet-link" id="back">Use a different email</button></div>
       </form>
       <div class="err" id="signin-err" role="alert"></div>
     </div>
@@ -184,6 +189,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

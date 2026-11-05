@@ -65,23 +65,68 @@
       $("sent-to").textContent = pending.email;
       $("form-ref").classList.add("hidden");
       $("form-code").classList.remove("hidden");
-      $("code").value = "";
-      $("code").focus();
+      clearCode();
+      focusBox(0);
     } catch (err) { $("signin-err").textContent = err.message; }
     $("send").disabled = false;
   });
-  $("form-code").addEventListener("submit", async (e) => {
-    e.preventDefault();
+  // The code: six boxes, one digit each, as the app's own code screens. Typing
+  // advances, backspace retreats, pasting the code from the email fills the
+  // row, and the sixth digit signs in on its own.
+  const DIGITS = 6;
+  const boxes = [];
+  (function buildCode() {
+    const row = $("code-row");
+    for (let i = 0; i < DIGITS; i++) {
+      const b = document.createElement("input");
+      b.type = "text"; b.inputMode = "numeric"; b.maxLength = 1; b.autocomplete = i === 0 ? "one-time-code" : "off";
+      b.setAttribute("aria-label", "Digit " + (i + 1));
+      b.addEventListener("input", () => {
+        const d = (b.value || "").replace(/[^0-9]/g, "").slice(-1);
+        b.value = d;
+        codeChanged();
+        if (d && i < DIGITS - 1) focusBox(i + 1);
+        if (d && i === DIGITS - 1 && codeValue().length === DIGITS) verify();
+      });
+      b.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace") { e.preventDefault(); if (b.value) { b.value = ""; } else if (i > 0) { boxes[i - 1].value = ""; focusBox(i - 1); } codeChanged(); }
+        else if (e.key === "ArrowLeft" && i > 0) { e.preventDefault(); focusBox(i - 1); }
+        else if (e.key === "ArrowRight" && i < DIGITS - 1) { e.preventDefault(); focusBox(i + 1); }
+      });
+      b.addEventListener("paste", (e) => {
+        const t = (e.clipboardData.getData("text") || "").replace(/[^0-9]/g, "").slice(0, DIGITS);
+        if (!t) return;
+        e.preventDefault();
+        boxes.forEach((x, k) => { x.value = t[k] || ""; });
+        codeChanged();
+        focusBox(Math.min(t.length, DIGITS - 1));
+        if (t.length === DIGITS) verify();
+      });
+      row.appendChild(b); boxes.push(b);
+    }
+  })();
+  function focusBox(i) { const b = boxes[Math.max(0, Math.min(DIGITS - 1, i))]; if (b) { b.focus(); b.select(); } }
+  function codeValue() { return boxes.map((b) => b.value).join(""); }
+  function codeChanged() { boxes.forEach((b) => b.classList.toggle("filled", !!b.value)); $("verify").disabled = codeValue().length !== DIGITS; $("signin-err").textContent = ""; }
+  function clearCode() { boxes.forEach((b) => { b.value = ""; }); codeChanged(); }
+  let verifying = false;
+  async function verify() {
+    const code = codeValue();
+    if (verifying || code.length !== DIGITS) return;
+    verifying = true;
     $("signin-err").textContent = "";
     $("verify").disabled = true;
-    const { data, error } = await sb.auth.verifyOtp({ email: pending.email, token: $("code").value.replace(/\s+/g, ""), type: "email" });
-    $("verify").disabled = false;
-    if (error || !data || !data.session) { $("signin-err").textContent = "That code is wrong or has expired. Check it, or ask for a new one."; return; }
+    $("verify").textContent = "Checking";
+    const { data, error } = await sb.auth.verifyOtp({ email: pending.email, token: code, type: "email" });
+    verifying = false;
+    $("verify").textContent = "Sign in";
+    if (error || !data || !data.session) { $("signin-err").textContent = "That code is wrong or has expired. Check it, or ask for a new one."; clearCode(); focusBox(0); return; }
     ref = pending.ref;
     setRef(ref);
     enter();
-  });
-  $("back").addEventListener("click", () => showSignin(""));
+  }
+  $("form-code").addEventListener("submit", (e) => { e.preventDefault(); verify(); });
+  $("back").addEventListener("click", () => { clearCode(); showSignin(""); });
   $("signout").addEventListener("click", async () => { await sb.auth.signOut(); setRef(""); location.href = location.pathname; });
 
   // ── the account ──
