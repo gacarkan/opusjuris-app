@@ -2,7 +2,7 @@
 // plan, usage, tokens and seats, to choose how the firm pays (bank debit,
 // card, or wire) and to see invoices. Opus Juris staff see every account and
 // set each firm's terms from the same page.
-// Sign in is the account number and admin email plus a one-time code emailed
+// Sign in is the firm code and admin email plus a one-time code emailed
 // to that address (Supabase Auth); everything else goes to the back end
 // (Python on PythonAnywhere, the opusjuris-backend repo), which checks the
 // signed-in email against the account. Card and bank details are entered on
@@ -158,7 +158,7 @@
     const a = j.account;
     $("me").textContent = a.admin_email;
     $("firm").textContent = a.firm_name;
-    $("refline").textContent = "Account number " + a.ref_no;
+    $("refline").textContent = "Firm code " + a.ref_no;
     $("owner-btn").classList.toggle("hidden", !j.is_owner);
     renderPlan(j);
     renderChoices(j);
@@ -244,7 +244,7 @@
       const j = await call("admin/accounts", {}, true);
       const rows = j.accounts || [];
       $("owner-list").className = rows.length ? "acct-list" : "empty";
-      $("owner-list").innerHTML = rows.length ? '<table><thead><tr><th>Firm</th><th>Number</th><th class="hide-sm">Administrator</th><th class="num">Monthly</th><th class="hide-sm">Term</th><th>Pays by</th><th></th></tr></thead><tbody>' + rows.map((a) =>
+      $("owner-list").innerHTML = rows.length ? '<table><thead><tr><th>Firm</th><th>Firm code</th><th class="hide-sm">Administrator</th><th class="num">Monthly</th><th class="hide-sm">Term</th><th>Pays by</th><th></th></tr></thead><tbody>' + rows.map((a) =>
         '<tr data-ref="' + esc(a.ref_no) + '"><td><b>' + esc(a.firm_name) + "</b>" + (a.active ? "" : ' <span class="tag">Inactive</span>') + "</td><td>" + esc(a.ref_no) + '</td><td class="hide-sm">' + esc(a.admin_email) + '</td><td class="num">' + (a.monthly_usd != null ? esc(usd(a.monthly_usd)) : "") + '</td><td class="hide-sm">' + (a.term_months ? esc(a.term_months + " mo from " + dateText(a.starts_on)) : "") + "</td><td>" + (a.pay_by === "wire" ? "Wire" : "Saved method") + '</td><td class="act"><span class="link">Edit</span></td></tr>').join("") + "</tbody></table>" : "No accounts yet.";
       $("owner-list").querySelectorAll("tr[data-ref]").forEach((tr) => tr.addEventListener("click", () => edit(rows.find((a) => a.ref_no === tr.dataset.ref))));
     } catch (err) { if (await expiredOut(err)) return; oflash("bad", err.message); }

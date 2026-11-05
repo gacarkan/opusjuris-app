@@ -101,7 +101,7 @@
       <form id="form-ref">
         <h1>Sign in</h1>
         <p>Your firm's Opus Juris account.</p>
-        <label for="ref">Account number</label>
+        <label for="ref">Firm code</label>
         <input id="ref" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
         <label for="email">Email</label>
         <input id="email" type="email" autocomplete="email" required>
@@ -170,7 +170,7 @@
       <section class="card hidden" id="owner-edit">
         <h2 id="owner-edit-title">Account</h2>
         <form id="owner-form" class="fields">
-          <label>Account number<input name="ref_no" autocapitalize="characters" spellcheck="false" required></label>
+          <label>Firm code<input name="ref_no" autocapitalize="characters" spellcheck="false" required></label>
           <label>Firm<input name="firm_name" required></label>
           <label>Administrator email<input name="admin_email" type="email" required></label>
           <label>Monthly amount, dollars<input name="monthly_usd" type="number" min="0" step="0.01"></label>
@@ -189,6 +189,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
