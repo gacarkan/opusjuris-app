@@ -66,7 +66,25 @@
   .big { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
   .facts { display: flex; gap: 28px; } .facts .k { display: block; font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); } .facts b { font-size: 1rem; }
   .warn-text { color: var(--bad); }
-  @media (max-width: 600px) { .hide-sm { display: none; } }
+  /* the three ways to pay */
+  .choices { display: grid; gap: 10px; }
+  .choice { display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; align-items: center; text-align: left; width: 100%; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); cursor: pointer; }
+  .choice:hover { border-color: var(--field); }
+  .choice.on { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15); }
+  .choice b { font-size: 1rem; }
+  .choice span { grid-column: 1; color: var(--muted); font-size: .86rem; }
+  .choice em { grid-column: 2; grid-row: 1 / span 2; font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .choice .tag { margin-left: 8px; vertical-align: middle; }
+  /* the owner's form */
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
+  .fields label { display: block; font-size: .8rem; font-weight: 600; }
+  .fields input, .fields select { display: block; width: 100%; margin-top: 5px; padding: 9px 11px; border: 1px solid var(--field); border-radius: 8px; background: var(--card); color: var(--ink); font-weight: 400; }
+  .fields .wide { grid-column: 1 / -1; }
+  .fields .check { display: flex; align-items: center; gap: 8px; align-self: end; }
+  .fields .check input { width: auto; margin: 0; }
+  .acct-list td.act { text-align: right; }
+  .acct-list tr { cursor: pointer; } .acct-list tr:hover td { background: var(--tint); }
+  @media (max-width: 600px) { .hide-sm { display: none; } .fields { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -96,18 +114,27 @@
   </section>
 
   <div id="app" class="hidden">
-    <header><div class="in"><b>Opus Juris Accounts</b><span class="who" id="me"></span><button class="btn quiet" id="signout">Sign out</button></div></header>
-    <main>
+    <header><div class="in"><b>Opus Juris Accounts</b><span class="who" id="me"></span><button class="btn quiet hidden" id="owner-btn">Accounts</button><button class="btn quiet" id="signout">Sign out</button></div></header>
+    <main id="main-firm">
       <div id="flash" class="banner hidden" role="status"></div>
       <section class="card">
         <div class="firm" id="firm"></div>
         <div class="sub" id="refline"></div>
       </section>
       <section class="card">
+        <h2>Plan</h2>
+        <div id="plan" class="empty"></div>
+      </section>
+      <section class="card">
+        <h2>How you pay</h2>
+        <div class="choices" id="choices"></div>
+        <div id="wire" class="note hidden"></div>
+      </section>
+      <section class="card">
         <h2>Usage</h2>
         <div class="row">
           <div><div class="big" id="tokens-left"></div><div class="note" id="tokens-note"></div><div class="note warn-text" id="tokens-warn"></div></div>
-          <div class="facts"><div><span class="k">Seats</span><b id="seats"></b></div><div><span class="k">Plan</span><b id="plan"></b></div></div>
+          <div class="facts"><div><span class="k">Seats</span><b id="seats"></b></div><div><span class="k">License</span><b id="lic-plan"></b></div></div>
         </div>
         <div class="note">Tokens are drawn down as the firm uses drafting, analysis and chat. They do not reset; more can be added to the account at any time.</div>
       </section>
@@ -128,10 +155,34 @@
         <div id="invoices" class="empty"></div>
       </section>
     </main>
+    <main id="main-owner" class="hidden">
+      <div id="owner-flash" class="banner hidden" role="status"></div>
+      <section class="card">
+        <div class="row"><h2 style="margin:0">Accounts</h2><button class="btn quiet" id="owner-new">New account</button></div>
+        <div id="owner-list" class="empty" style="margin-top:14px">Loading</div>
+      </section>
+      <section class="card hidden" id="owner-edit">
+        <h2 id="owner-edit-title">Account</h2>
+        <form id="owner-form" class="fields">
+          <label>Account number<input name="ref_no" autocapitalize="characters" spellcheck="false" required></label>
+          <label>Firm<input name="firm_name" required></label>
+          <label>Administrator email<input name="admin_email" type="email" required></label>
+          <label>Monthly amount, dollars<input name="monthly_usd" type="number" min="0" step="0.01"></label>
+          <label>Months<input name="term_months" type="number" min="1" step="1"></label>
+          <label>Starts on<input name="starts_on" type="date"></label>
+          <label>Bank discount, percent<input name="bank_discount_pct" type="number" min="0" max="10" step="0.5" value="3"></label>
+          <label>Pays by<select name="pay_by"><option value="auto">Saved card or bank account</option><option value="wire">Wire, invoiced by email</option></select></label>
+          <label class="wide">Notes<input name="notes"></label>
+          <label class="check"><input name="active" type="checkbox" checked> Active</label>
+          <div class="wide row"><button class="btn" id="owner-save">Save</button><button type="button" class="btn quiet" id="owner-cancel">Cancel</button></div>
+        </form>
+        <div class="note" id="owner-hint">Saving creates or updates the firm's subscription in Stripe from these terms.</div>
+      </section>
+    </main>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
