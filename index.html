@@ -90,6 +90,12 @@
   .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; background: var(--line); color: var(--muted); vertical-align: middle; }
   .tag.paid, .tag.active, .tag.on { background: var(--ok-bg); color: var(--ok); } .tag.open, .tag.past_due, .tag.unpaid, .tag.trialing { background: var(--warn-bg); color: var(--warn); } .tag.uncollectible, .tag.canceled { background: var(--bad-bg); color: var(--bad); }
   .empty { color: var(--muted); font-size: .92rem; }
+  /* shimmer placeholders that hold the layout while the figures load */
+  .skel { display: inline-block; height: 1em; width: 8em; max-width: 100%; border-radius: 6px; vertical-align: middle; background: linear-gradient(90deg, var(--line) 25%, var(--bg) 40%, var(--line) 55%); background-size: 300% 100%; animation: shimmer 1.3s ease-in-out infinite; }
+  .skel.line { display: block; height: 12px; margin: 10px 0; }
+  .skel.row { display: block; height: 58px; border-radius: 10px; margin: 8px 0; }
+  @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+  @media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
   .tag:empty { display: none; }
   .method { display: flex; align-items: center; gap: 12px; }
   .method .icon { width: 40px; height: 28px; border-radius: 6px; background: var(--tint); color: var(--blue); display: grid; place-items: center; flex: none; }
@@ -232,6 +238,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>

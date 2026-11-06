@@ -131,10 +131,26 @@
 
   // ── the account ──
   function flash(kind, text) { const f = $("flash"); f.className = "banner " + kind; f.textContent = text; }
+  // Placeholders in every spot a figure will land, so the page keeps its
+  // shape while the account loads instead of filling in piece by piece.
+  function skeleton() {
+    const sk = (w) => '<span class="skel" style="width:' + w + '"></span>';
+    const lines = (n) => Array.from({ length: n }, () => '<span class="skel line"></span>').join("");
+    $("firm").innerHTML = sk("220px"); $("refline").innerHTML = sk("120px");
+    $("status").textContent = ""; $("sub-status").textContent = "";
+    for (const id of ["st-next", "st-plan", "st-method", "st-tokens"]) { $(id).innerHTML = sk("72%"); $(id + "-s").innerHTML = sk("55%"); }
+    $("plan").className = ""; $("plan").innerHTML = lines(4);
+    $("invoices").className = ""; $("invoices").innerHTML = lines(3);
+    $("method-icon").innerHTML = ""; $("method").innerHTML = sk("160px"); $("method-note").innerHTML = sk("120px");
+    $("add").textContent = ""; $("add").classList.add("hidden");
+    $("choices").innerHTML = '<span class="skel row"></span><span class="skel row"></span><span class="skel row"></span>';
+    $("month-total").innerHTML = sk("110px"); $("month-note").innerHTML = sk("200px"); $("cases").innerHTML = lines(3); $("tokens-warn").textContent = "";
+  }
   async function enter() {
     $("signin").classList.add("hidden");
     $("app").classList.remove("hidden");
     showFirm();
+    if (!current) skeleton();
     // Coming back from Stripe: ?setup=cs_... when something was added, ?setup=cancel when it was not.
     const q = new URLSearchParams(location.search).get("setup");
     if (q) history.replaceState(null, "", location.pathname);
