@@ -199,9 +199,9 @@
     const total = mo && mo.total_usd != null ? Number(mo.total_usd) : null;
     $("st-usage-k").textContent = "Usage " + periodText;
     $("st-usage").textContent = total != null ? usd(total) : (onTokens ? tokens(tk.used) + " tokens" : "n/a");
-    $("st-usage-s").textContent = mo && mo.days_left != null && !since ? mo.days_left + " days left" : (mo && mo.usage_rate != null && Number(mo.usage_rate) !== 1 ? "At the firm\u2019s rate" : "");
+    $("st-usage-s").textContent = mo && mo.days_left != null && !since ? mo.days_left + " days left" : (mo && mo.usage_rate != null && Number(mo.usage_rate) !== 1 ? "At your firm\u2019s prices" : "");
     $("month-total").textContent = total != null ? usd(total) : "";
-    $("month-note").textContent = total != null ? (onTokens ? tokens(tk.used) + " tokens used " + periodText + (Number(mo.usage_rate) !== 1 ? ", at the firm\u2019s rate" : "") : "At the firm\u2019s rate") : "No usage recorded yet.";
+    $("month-note").textContent = total != null ? (onTokens ? tokens(tk.used) + " tokens used " + periodText + (Number(mo.usage_rate) !== 1 ? ", at your firm\u2019s prices" : "") : "At your firm\u2019s prices") : "No usage recorded yet.";
     $("st-tokens").textContent = onTokens ? tokens(tk.left) : "n/a";
     $("st-tokens-s").textContent = onTokens ? "of " + tokens(tk.granted) + " granted" : "Not on tokens";
     $("st-seats").textContent = s ? String(s.used) : "n/a";
