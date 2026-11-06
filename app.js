@@ -150,7 +150,7 @@
     $("chart-range").innerHTML = '<span class="skel" style="width:150px;height:30px;border-radius:8px"></span>'; $("chart-view").innerHTML = '<span class="skel" style="width:64px;height:30px;border-radius:8px"></span>';
     $("bd-list").innerHTML = lines(4); $("bd-tabs").innerHTML = ""; $("bd-sub").textContent = ""; $("tokens-warn").textContent = "";
     $("method-icon").innerHTML = ""; $("method").innerHTML = sk("160px"); $("method-note").innerHTML = sk("120px");
-    $("chooser").classList.add("hidden");
+    $("chooser").classList.remove("open");
     $("invoices").className = ""; $("invoices").innerHTML = lines(2);
   }
   async function enter() {
@@ -233,8 +233,7 @@
     $("add").textContent = m ? "Change payment method" : "Add payment method";
     $("price-bank").textContent = p ? usd(p.bank_monthly_usd) + " / month" : "";
     $("price-card").textContent = p ? usd(p.monthly_usd) + " / month" : "";
-    $("disc-pct").textContent = p ? String(p.bank_discount_pct).replace(/\.0$/, "") : "3";
-    $("chooser").classList.add("hidden");
+    $("chooser").classList.remove("open");
     const w = $("wire");
     if (pay === "wire") { w.classList.remove("hidden"); w.textContent = j.wire_instructions ? "Wire to: " + j.wire_instructions : "Each invoice arrives by email with wire instructions."; }
     else w.classList.add("hidden");
@@ -396,7 +395,7 @@
       location.href = j.url;
     } catch (err) { if (await expiredOut(err)) return; flash("bad", err.message); }
   }
-  $("add").addEventListener("click", () => { $("chooser").classList.toggle("hidden"); });
+  $("add").addEventListener("click", () => { $("chooser").classList.toggle("open"); });
   document.querySelectorAll(".choice-btn").forEach((b) => b.addEventListener("click", () => choose(b.dataset.pay)));
   $("choose-wire").addEventListener("click", () => choose("wire"));
 
