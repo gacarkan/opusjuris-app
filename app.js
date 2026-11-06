@@ -214,8 +214,12 @@
     // usage this month
     const mo = u.month, s = u.seats;
     $("month-total").textContent = mo && mo.total_usd != null ? usd(mo.total_usd) : (onTokens ? tokens(tk.used) + " tokens used" : "");
+    // the window: the calendar month, or since the first token grant on a firm on tokens
+    const since = mo && mo.on_tokens && mo.window_start ? String(mo.window_start).slice(0, 10) : null;
+    $("usage-title").textContent = since ? "Usage since " + dateText(since) : "Usage this month";
     const bits = [];
-    if (mo && mo.days_left != null) bits.push(mo.days_left + " days left in the month");
+    if (mo && mo.usage_rate != null && Number(mo.usage_rate) !== 1) bits.push("at the firm’s rate");
+    if (mo && mo.days_left != null && !since) bits.push(mo.days_left + " days left in the month");
     if (s && s.seats) bits.push(s.used + " of " + s.seats + " seats in use"); else if (s) bits.push(s.used + " seats in use");
     $("month-note").textContent = bits.join(" \u00b7 ") || "No usage recorded yet.";
     const cases = (mo && mo.by_case) || [];
