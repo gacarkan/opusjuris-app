@@ -10,7 +10,9 @@
 (function () {
   "use strict";
   const cfg = window.BILLING_CONFIG || {};
-  const sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  // The session is kept in the tab only (sessionStorage), so closing the
+  // browser ends it and the next visit asks for a code again.
+  const sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, { auth: { storage: window.sessionStorage } });
   const API = String(cfg.apiBase || "").replace(/\/+$/, "");
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -19,21 +21,12 @@
   const day = (secs) => (secs ? new Date(secs * 1000).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "");
   const dateText = (iso) => (iso ? new Date(iso + "T00:00:00").toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "");
   const label = (s) => String(s || "").replace(/_/g, " ");
-  // A sign-in is remembered on this browser for 30 days (the firm code and
-  // when it was entered; the session itself lives in the Auth client's own
-  // storage). Sign out, or the 30 days passing, asks for a code again.
+  // The firm code rides in the tab with the session; a new tab or a new
+  // visit starts at the sign-in form.
   const REF_KEY = "oj-account-ref";
-  const REMEMBER_MS = 30 * 24 * 60 * 60 * 1000;
   let ref = "", pending = { ref: "", email: "" }, current = null;
-  const getRef = () => {
-    try {
-      const raw = localStorage.getItem(REF_KEY) || "";
-      if (!raw) return "";
-      const j = /^\{/.test(raw) ? JSON.parse(raw) : { ref: raw, at: 0 };
-      return j.ref && j.at && Date.now() - j.at < REMEMBER_MS ? String(j.ref) : "";
-    } catch (e) { return ""; }
-  };
-  const setRef = (v) => { try { v ? localStorage.setItem(REF_KEY, JSON.stringify({ ref: v, at: Date.now() })) : localStorage.removeItem(REF_KEY); } catch (e) { /* private mode: the code is asked for again next time */ } };
+  const getRef = () => { try { return sessionStorage.getItem(REF_KEY) || ""; } catch (e) { return ""; } };
+  const setRef = (v) => { try { v ? sessionStorage.setItem(REF_KEY, v) : sessionStorage.removeItem(REF_KEY); } catch (e) { /* private mode: the code is asked for again */ } };
 
   async function call(action, extra, authed) {
     const headers = { "Content-Type": "application/json" };
@@ -345,8 +338,6 @@
     const { data } = await sb.auth.getSession();
     ref = getRef();
     if (data && data.session && ref) return enter();
-    // a session with no remembered firm code (the 30 days passed, or the
-    // code was cleared) ends here: the next sign-in starts clean
     if (data && data.session) await sb.auth.signOut();
     setRef("");
     showSignin("");
