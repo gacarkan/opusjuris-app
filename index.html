@@ -62,6 +62,12 @@
   .banner { padding: 12px 14px; border-radius: 8px; font-size: .92rem; margin-bottom: 16px; }
   .banner.ok { background: var(--ok-bg); color: var(--ok); } .banner.warn { background: var(--warn-bg); color: var(--warn); } .banner.bad { background: var(--bad-bg); color: var(--bad); }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .stats.three { grid-template-columns: repeat(3, 1fr); }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+  .tab { padding: 10px 14px; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: transparent; color: var(--muted); font: inherit; font-weight: 600; cursor: pointer; }
+  .tab:hover { color: var(--ink); }
+  .tab.on { color: var(--blue); border-bottom-color: var(--blue); }
+  #tab-usage .card { margin-top: 0; }
   .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; min-width: 0; }
   .stat .k { display: block; font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
   .stat .v { font-size: 1.45rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -161,8 +167,8 @@
   .acct-list th.num, .acct-list td.num { padding-right: 18px; }
   .acct-list tr[data-ref] { cursor: pointer; } .acct-list tr[data-ref]:hover td { background: var(--tint); }
   #main-owner { display: grid; gap: 20px; }
-  @media (max-width: 900px) { .stats { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } .split { grid-template-columns: 1fr; } }
-  @media (max-width: 600px) { .hide-sm { display: none; } .fields { grid-template-columns: 1fr; } .stats { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) { .stats, .stats.three { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } }
+  @media (max-width: 600px) { .hide-sm { display: none; } .fields { grid-template-columns: 1fr; } .stats, .stats.three { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -202,52 +208,61 @@
         <div><h1 id="firm"></h1></div>
         <span class="tag" id="status"></span>
       </div>
+      <nav class="tabs" aria-label="Sections"><button type="button" class="tab on" data-tab="usage">Usage</button><button type="button" class="tab" data-tab="billing">Billing</button></nav>
       <div id="flash" class="banner hidden" role="status"></div>
-      <div class="stats">
-        <div class="stat"><span class="k" id="st-usage-k">Usage</span><div class="v" id="st-usage"></div><div class="s" id="st-usage-s"></div></div>
-        <div class="stat"><span class="k">Tokens left</span><div class="v" id="st-tokens"></div><div class="s" id="st-tokens-s"></div></div>
-        <div class="stat"><span class="k">Seats</span><div class="v" id="st-seats"></div><div class="s" id="st-seats-s"></div></div>
-        <div class="stat"><span class="k">Next payment</span><div class="v" id="st-next"></div><div class="s" id="st-next-s"></div></div>
-      </div>
-      <div class="grid">
-        <div class="col">
-          <section class="card">
-            <div class="head"><h2 id="usage-title">Usage</h2><span class="sub" id="usage-period"></span></div>
-            <div class="usage-big" id="month-total"></div>
-            <div class="sub" id="month-note"></div>
-            <div class="chart-head">
-              <div><div class="chart-title">Daily usage</div><div class="sub">At your firm’s prices, by day.</div></div>
-              <div class="chart-tools"><div class="seg-group" id="chart-range"></div><div class="seg-group" id="chart-view"></div></div>
-            </div>
-            <div class="chart" id="chart"></div>
-            <div class="breakdown">
-              <div class="chart-head" style="margin-top:0"><div><div class="chart-title">Where it went</div><div class="sub" id="bd-sub"></div></div><div class="chart-tools"><div class="seg-group" id="bd-tabs"></div></div></div>
-              <div class="bars" id="bd-list"></div>
-            </div>
-            <div class="note warn-text" id="tokens-warn"></div>
-          </section>
+      <section id="tab-usage">
+        <div class="stats three">
+          <div class="stat"><span class="k" id="st-usage-k">Usage</span><div class="v" id="st-usage"></div><div class="s" id="st-usage-s"></div></div>
+          <div class="stat"><span class="k">Tokens left</span><div class="v" id="st-tokens"></div><div class="s" id="st-tokens-s"></div></div>
+          <div class="stat"><span class="k">Seats</span><div class="v" id="st-seats"></div><div class="s" id="st-seats-s"></div></div>
         </div>
-        <div class="col">
-          <section class="card">
-            <div class="head"><h2>Subscription</h2><span class="tag" id="sub-status"></span></div>
-            <div id="plan"></div>
-          </section>
-          <section class="card">
-            <div class="head"><h2>Billing</h2><button type="button" class="link" id="add"></button></div>
-            <div class="method" id="method-box"><div class="icon" id="method-icon"></div><div><b id="method"></b><span id="method-note"></span></div></div>
-            <div class="paylist" id="choices"></div>
-            <div id="wire" class="note hidden"></div>
-            <div class="note" id="pay-note"></div>
-          </section>
-          <section class="card help">
-            <div class="head"><h2>Questions</h2></div>
-            <div class="sub">About your plan or an invoice: <a href="mailto:support@opusjuris.com">support@opusjuris.com</a>.</div>
-          </section>
+        <section class="card">
+          <div class="head"><h2 id="usage-title">Usage</h2><span class="sub" id="usage-period"></span></div>
+          <div class="usage-big" id="month-total"></div>
+          <div class="sub" id="month-note"></div>
+          <div class="chart-head">
+            <div><div class="chart-title">Daily usage</div><div class="sub">At your firm’s prices, by day.</div></div>
+            <div class="chart-tools"><div class="seg-group" id="chart-range"></div><div class="seg-group" id="chart-view"></div></div>
+          </div>
+          <div class="chart" id="chart"></div>
+          <div class="breakdown">
+            <div class="chart-head" style="margin-top:0"><div><div class="chart-title">Where it went</div><div class="sub" id="bd-sub"></div></div><div class="chart-tools"><div class="seg-group" id="bd-tabs"></div></div></div>
+            <div class="bars" id="bd-list"></div>
+          </div>
+          <div class="note warn-text" id="tokens-warn"></div>
+        </section>
+      </section>
+      <section id="tab-billing" class="hidden">
+        <div class="stats three">
+          <div class="stat"><span class="k">Next payment</span><div class="v" id="st-next"></div><div class="s" id="st-next-s"></div></div>
+          <div class="stat"><span class="k">Plan</span><div class="v" id="st-plan"></div><div class="s" id="st-plan-s"></div></div>
+          <div class="stat"><span class="k">Payment method</span><div class="v" id="st-method"></div><div class="s" id="st-method-s"></div></div>
         </div>
-      </div>
-      <section class="card bottom">
-        <div class="head"><h2>Invoices</h2></div>
-        <div id="invoices" class="empty"></div>
+        <div class="grid">
+          <div class="col">
+            <section class="card">
+              <div class="head"><h2>Subscription</h2><span class="tag" id="sub-status"></span></div>
+              <div id="plan"></div>
+            </section>
+            <section class="card">
+              <div class="head"><h2>Invoices</h2></div>
+              <div id="invoices" class="empty"></div>
+            </section>
+          </div>
+          <div class="col">
+            <section class="card">
+              <div class="head"><h2>Payment method</h2><button type="button" class="link" id="add"></button></div>
+              <div class="method" id="method-box"><div class="icon" id="method-icon"></div><div><b id="method"></b><span id="method-note"></span></div></div>
+              <div class="paylist" id="choices"></div>
+              <div id="wire" class="note hidden"></div>
+              <div class="note" id="pay-note"></div>
+            </section>
+            <section class="card help">
+              <div class="head"><h2>Questions</h2></div>
+              <div class="sub">About your plan or an invoice: <a href="mailto:support@opusjuris.com">support@opusjuris.com</a>.</div>
+            </section>
+          </div>
+        </div>
       </section>
     </main>
     <main id="main-owner" class="hidden">
@@ -278,6 +293,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="app.js?v=27"></script>
+  <script src="app.js?v=28"></script>
 </body>
 </html>

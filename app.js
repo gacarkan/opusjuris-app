@@ -142,7 +142,7 @@
     const lines = (n) => Array.from({ length: n }, () => '<span class="skel line"></span>').join("");
     $("firm").innerHTML = sk("220px");
     $("status").textContent = ""; $("sub-status").textContent = "";
-    for (const id of ["st-usage", "st-tokens", "st-seats", "st-next"]) { $(id).innerHTML = sk("72%"); $(id + "-s").innerHTML = sk("55%"); }
+    for (const id of ["st-usage", "st-tokens", "st-seats", "st-next", "st-plan", "st-method"]) { $(id).innerHTML = sk("72%"); $(id + "-s").innerHTML = sk("55%"); }
     $("month-total").innerHTML = sk("140px"); $("month-note").innerHTML = sk("220px"); $("usage-period").textContent = "";
     const hs = [18, 30, 22, 46, 38, 26, 60, 44, 32, 52, 70, 48, 36, 58, 42, 28, 64, 50, 34, 56, 72, 40, 30, 62, 46, 38, 54, 44, 26, 48];
     $("chart").innerHTML = '<div class="skel-chart">' + hs.map((p) => '<i style="height:' + p + '%"></i>').join("") + '</div><div class="axis"><span class="skel" style="width:52px"></span><span class="skel" style="width:52px"></span></div>';
@@ -157,10 +157,11 @@
     $("signin").classList.add("hidden");
     $("app").classList.remove("hidden");
     showFirm();
+    showTab(location.hash === "#billing" ? "billing" : "usage");
     if (!current) skeleton();
     // Coming back from Stripe: ?setup=cs_... when something was added, ?setup=cancel when it was not.
     const q = new URLSearchParams(location.search).get("setup");
-    if (q) history.replaceState(null, "", location.pathname);
+    if (q) { history.replaceState(null, "", location.pathname + "#billing"); showTab("billing"); }
     try {
       if (q && /^cs_/.test(q)) {
         try { await call("complete-setup", { ref, session_id: q }, true); flash("ok", "Your payment method was saved."); }
@@ -219,6 +220,10 @@
     else if (sub && sub.current_period_end) { $("st-next").textContent = usd(price); $("st-next-s").textContent = (sub.cancel_at_period_end ? "Final, " : "Due ") + day(sub.current_period_end); }
     else if (p.starts_on > today) { $("st-next").textContent = usd(price); $("st-next-s").textContent = "First payment " + dateText(p.starts_on); }
     else { $("st-next").textContent = usd(price); $("st-next-s").textContent = "Each month"; }
+    $("st-plan").textContent = p ? usd(p.monthly_usd) + "/mo" : "None";
+    $("st-plan-s").textContent = p ? (p.term_months + (p.term_months === 1 ? " month" : " months") + ", ends " + dateText(p.ends_on)) : "Set after your agreement";
+    const mt0 = methodText(m, pay);
+    $("st-method").textContent = mt0.short; $("st-method-s").textContent = mt0.sub;
     // the subscription card
     const ss = $("sub-status");
     if (sub) { ss.textContent = label(sub.status); ss.className = "tag " + esc(sub.status); } else { ss.textContent = p ? "Not started" : ""; ss.className = "tag"; }
@@ -396,6 +401,17 @@
   });
 
   // ── the owner's screen: every account and its terms ──
+  // Usage or Billing, kept in the address (#billing) so a refresh stays put
+  function showTab(name) {
+    const billing = name === "billing";
+    $("tab-usage").classList.toggle("hidden", billing);
+    $("tab-billing").classList.toggle("hidden", !billing);
+    document.querySelectorAll(".tabs .tab").forEach((b) => b.classList.toggle("on", b.dataset.tab === (billing ? "billing" : "usage")));
+    const want = billing ? "#billing" : "";
+    if (location.hash !== want && location.hash !== "#accounts") history.replaceState(null, "", location.pathname + want);
+    if (!billing && chartState.view === "chart" && current) drawChart();
+  }
+  document.querySelectorAll(".tabs .tab").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
   function showFirm() { $("main-owner").classList.add("hidden"); $("main-firm").classList.remove("hidden"); $("owner-btn").classList.add("hidden"); if (location.hash === "#accounts") history.replaceState(null, "", location.pathname); }
   function showOwner() { $("main-firm").classList.add("hidden"); $("main-owner").classList.remove("hidden"); $("owner-btn").textContent = "My account"; $("owner-btn").classList.remove("hidden"); loadAccounts(); }
   $("owner-btn").addEventListener("click", () => showFirm());
