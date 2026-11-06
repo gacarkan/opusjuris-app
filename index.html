@@ -138,6 +138,27 @@
   .brow .t i { display: block; height: 100%; background: var(--blue); border-radius: 3px; }
   .brow .more { color: var(--muted); font-size: .84rem; }
   .help a { color: var(--blue); text-decoration: none; font-weight: 600; } .help a:hover { text-decoration: underline; }
+  .plan-line { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  .plan-line b { font-size: 1.05rem; }
+  .plan-line .link { text-decoration: none; font-size: .88rem; } .plan-line .link:hover { text-decoration: underline; }
+  .kv-row { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); font-size: .9rem; }
+  .kv-row:empty { display: none; }
+  .kv-row span { color: var(--muted); display: block; font-size: .78rem; margin-bottom: 2px; }
+  .kv-row b { font-variant-numeric: tabular-nums; }
+  .pm-row { display: flex; align-items: center; gap: 12px; }
+  .pm-row .icon { width: 40px; height: 28px; border-radius: 6px; background: var(--tint); color: var(--blue); display: grid; place-items: center; flex: none; }
+  .pm-row .pm-text { flex: 1; min-width: 0; }
+  .pm-row b { display: block; font-size: .95rem; }
+  .pm-row span { color: var(--muted); font-size: .84rem; }
+  .chooser { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 12px; }
+  .choose-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .choice-btn { display: grid; gap: 2px; text-align: left; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; cursor: pointer; }
+  .choice-btn:hover { border-color: var(--field); background: var(--bg); }
+  .choice-btn b { font-size: .92rem; }
+  .choice-btn span { color: var(--muted); font-size: .8rem; }
+  .choice-btn em { font-style: normal; font-weight: 600; font-size: .88rem; font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .chooser .link { text-decoration: none; } .chooser .link:hover { text-decoration: underline; }
+  @media (max-width: 600px) { .choose-row { grid-template-columns: 1fr; } }
   .warn-text { color: var(--bad); }
   /* the owner's form */
   .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
@@ -224,34 +245,27 @@
         </section>
       </section>
       <section id="tab-billing" class="hidden">
-        <div class="page-head"><div><h1>Billing</h1><div class="sub">Your plan, how you pay, and your invoices.</div></div><span class="tag" id="sub-status"></span></div>
-        <div class="stats">
-          <div class="stat"><span class="k">Next payment</span><div class="v" id="st-next"></div><div class="s" id="st-next-s"></div></div>
-          <div class="stat"><span class="k">Plan</span><div class="v" id="st-plan"></div><div class="s" id="st-plan-s"></div></div>
-          <div class="stat"><span class="k">Payment method</span><div class="v" id="st-method"></div><div class="s" id="st-method-s"></div></div>
-        </div>
-        <div class="grid">
-          <div class="col">
-            <section class="card">
-              <div class="head"><h2>Plan</h2></div>
-              <div id="plan"></div>
-            </section>
-            <section class="card help">
-              <div class="head"><h2>Questions</h2></div>
-              <div class="sub">About your plan or an invoice: <a href="mailto:support@opusjuris.com">support@opusjuris.com</a>.</div>
-            </section>
+        <div class="page-head"><div><h1>Billing</h1><div class="sub">Your plan, payment method and invoices.</div></div></div>
+        <section class="card">
+          <div class="head"><h2>Plan</h2><span class="tag" id="sub-status"></span></div>
+          <div class="plan-line"><div><b id="plan-name">Custom plan</b><div class="sub" id="plan-terms"></div></div><a class="link" href="mailto:support@opusjuris.com?subject=Plan%20change">Contact us to change</a></div>
+          <div class="kv-row" id="plan-next"></div>
+        </section>
+        <section class="card">
+          <div class="head"><h2>Payment method</h2><button type="button" class="btn quiet sm" id="add">Add payment method</button></div>
+          <div class="pm-row" id="pm-row"><div class="icon" id="method-icon"></div><div class="pm-text"><b id="method"></b><span id="method-note"></span></div><span class="tag" id="pm-default"></span></div>
+          <div class="chooser hidden" id="chooser">
+            <div class="sub">How would you like to pay?</div>
+            <div class="choose-row">
+              <button type="button" class="choice-btn" data-pay="bank"><b>Bank account</b><span>ACH debit, drawn on each invoice</span><em id="price-bank"></em></button>
+              <button type="button" class="choice-btn" data-pay="card"><b>Card</b><span>Charged on each invoice</span><em id="price-card"></em></button>
+            </div>
+            <div class="sub">Or <button type="button" class="link" id="choose-wire">pay each invoice by wire</button>. Bank payment is <span id="disc-pct"></span>% below the card price.</div>
           </div>
-          <div class="col">
-            <section class="card">
-              <div class="head"><h2>Payment method</h2><button type="button" class="link" id="add"></button></div>
-              <div class="method" id="method-box"><div class="icon" id="method-icon"></div><div><b id="method"></b><span id="method-note"></span></div></div>
-              <div class="paylist" id="choices"></div>
-              <div id="wire" class="note hidden"></div>
-              <div class="note" id="pay-note"></div>
-            </section>
-          </div>
-        </div>
-        <section class="card" style="margin-top:20px">
+          <div id="wire" class="note hidden"></div>
+          <div class="note" id="pay-note">Card and bank details are entered on Stripe’s secure page and never stored by Opus Juris.</div>
+        </section>
+        <section class="card">
           <div class="head"><h2>Invoices</h2></div>
           <div id="invoices" class="empty"></div>
         </section>
@@ -286,6 +300,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="app.js?v=30"></script>
+  <script src="app.js?v=32"></script>
 </body>
 </html>

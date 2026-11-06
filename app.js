@@ -142,15 +142,15 @@
     const lines = (n) => Array.from({ length: n }, () => '<span class="skel line"></span>').join("");
     $("firm").innerHTML = sk("220px");
     $("status").textContent = ""; $("sub-status").textContent = "";
-    for (const id of ["st-usage", "st-tokens", "st-seats", "st-next", "st-plan", "st-method"]) { $(id).innerHTML = sk("72%"); $(id + "-s").innerHTML = sk("55%"); }
+    for (const id of ["st-usage", "st-tokens", "st-seats"]) { $(id).innerHTML = sk("72%"); $(id + "-s").innerHTML = sk("55%"); }
+    $("plan-terms").innerHTML = sk("220px"); $("plan-next").innerHTML = ""; $("pm-default").textContent = "";
     $("usage-period").textContent = "";
     const hs = [18, 30, 22, 46, 38, 26, 60, 44, 32, 52, 70, 48, 36, 58, 42, 28, 64, 50, 34, 56, 72, 40, 30, 62, 46, 38, 54, 44, 26, 48];
     $("chart").innerHTML = '<div class="skel-chart">' + hs.map((p) => '<i style="height:' + p + '%"></i>').join("") + '</div><div class="axis"><span class="skel" style="width:52px"></span><span class="skel" style="width:52px"></span></div>';
     $("chart-range").innerHTML = '<span class="skel" style="width:150px;height:30px;border-radius:8px"></span>'; $("chart-view").innerHTML = '<span class="skel" style="width:64px;height:30px;border-radius:8px"></span>';
     $("bd-list").innerHTML = lines(4); $("bd-tabs").innerHTML = ""; $("bd-sub").textContent = ""; $("tokens-warn").textContent = "";
-    $("plan").className = ""; $("plan").innerHTML = lines(4);
     $("method-icon").innerHTML = ""; $("method").innerHTML = sk("160px"); $("method-note").innerHTML = sk("120px");
-    $("add").textContent = ""; $("choices").innerHTML = lines(3); $("pay-note").textContent = "";
+    $("chooser").classList.add("hidden");
     $("invoices").className = ""; $("invoices").innerHTML = lines(2);
   }
   async function enter() {
@@ -210,29 +210,34 @@
     renderChart(u.series || []);
     renderBreakdown(mo, periodText);
     $("tokens-warn").textContent = onTokens && Number(tk.left) <= 0 ? "No tokens left: drafting, analysis and chat are paused until more tokens are added." : "";
-    // next payment
+    // the plan card
     const price = p ? (p.discounted ? p.bank_monthly_usd : p.monthly_usd) : null;
     const today = new Date().toISOString().slice(0, 10);
-    if (!p) { $("st-next").textContent = "Not scheduled"; $("st-next-s").textContent = "Once your terms are set"; }
-    else if (sub && sub.current_period_end) { $("st-next").textContent = usd(price); $("st-next-s").textContent = (sub.cancel_at_period_end ? "Final, " : "Due ") + day(sub.current_period_end); }
-    else if (p.starts_on > today) { $("st-next").textContent = usd(price); $("st-next-s").textContent = "First payment " + dateText(p.starts_on); }
-    else { $("st-next").textContent = usd(price); $("st-next-s").textContent = "Each month"; }
-    $("st-plan").textContent = "Custom";
-    $("st-plan-s").textContent = p ? (usd(p.monthly_usd) + " per month, ends " + dateText(p.ends_on)) : "Terms agreed with Opus Juris";
-    const mt0 = methodText(m, pay);
-    $("st-method").textContent = mt0.short; $("st-method-s").textContent = mt0.sub;
-    // the subscription card
     const ss = $("sub-status");
-    if (sub) { ss.textContent = label(sub.status); ss.className = "tag " + esc(sub.status); } else { ss.textContent = p ? "Not started" : ""; ss.className = "tag"; }
-    renderPlan(j, sub, price);
-    // billing: the method on file and the ways to pay
+    if (sub) { ss.textContent = label(sub.status); ss.className = "tag " + esc(sub.status); } else { ss.textContent = ""; ss.className = "tag"; }
+    $("plan-terms").textContent = p ? usd(p.monthly_usd) + " per month, " + p.term_months + (p.term_months === 1 ? " month" : " months") + ", " + dateText(p.starts_on) + " to " + dateText(p.ends_on) : "Your terms are agreed with Opus Juris and appear here once set.";
+    const facts = [];
+    if (p && sub && sub.current_period_end) facts.push([sub.cancel_at_period_end ? "Final payment" : "Next payment", usd(price) + " on " + day(sub.current_period_end)]);
+    else if (p && p.starts_on > today) facts.push(["First payment", usd(price) + " on " + dateText(p.starts_on)]);
+    else if (p) facts.push(["Each month", usd(price)]);
+    if (p) facts.push(["Pays by", pay === "wire" ? "Wire" : m ? (m.type === "bank" ? "Bank debit" : "Card") : "Not set"]);
+    if (p) facts.push(["Term ends", dateText(p.ends_on)]);
+    $("plan-next").innerHTML = facts.map((f) => "<div><span>" + esc(f[0]) + "</span><b>" + esc(f[1]) + "</b></div>").join("");
+    // the payment method card
     const mt = methodText(m, pay);
     $("method-icon").innerHTML = mt.icon;
     $("method").textContent = mt.long;
     $("method-note").textContent = mt.note;
-    $("add").textContent = m ? "Change" : "";
-    renderChoices(j, pay);
-    $("pay-note").textContent = p ? "Bank payment, by debit or wire, is " + String(p.bank_discount_pct).replace(/\.0$/, "") + "% below the card price. Details are entered on Stripe\u2019s secure page and never stored by Opus Juris." : "Card and bank details are entered on Stripe\u2019s secure page and never stored by Opus Juris.";
+    $("pm-default").textContent = m && pay !== "wire" ? "Default" : "";
+    $("pm-default").className = "tag" + (m && pay !== "wire" ? " on" : "");
+    $("add").textContent = m ? "Change payment method" : "Add payment method";
+    $("price-bank").textContent = p ? usd(p.bank_monthly_usd) + " / month" : "";
+    $("price-card").textContent = p ? usd(p.monthly_usd) + " / month" : "";
+    $("disc-pct").textContent = p ? String(p.bank_discount_pct).replace(/\.0$/, "") : "3";
+    $("chooser").classList.add("hidden");
+    const w = $("wire");
+    if (pay === "wire") { w.classList.remove("hidden"); w.textContent = j.wire_instructions ? "Wire to: " + j.wire_instructions : "Each invoice arrives by email with wire instructions."; }
+    else w.classList.add("hidden");
     // invoices
     const inv = j.invoices || [];
     $("invoices").className = inv.length ? "" : "empty";
@@ -350,7 +355,7 @@
   const ICON_WIRE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M14 6l6 6-6 6"/></svg>';
   function methodText(m, pay) {
     if (pay === "wire") return { short: "Wire", sub: "Invoiced by email", long: "Paying by wire", note: "Each invoice arrives by email with wire instructions.", icon: ICON_WIRE };
-    if (!m) return { short: "Not set", sub: "Add one to pay automatically", long: "No payment method on file", note: "Choose a way to pay below.", icon: ICON_CARD };
+    if (!m) return { short: "Not set", sub: "Add one to pay automatically", long: "No payment method on file", note: "Add one to pay each invoice automatically.", icon: ICON_CARD };
     if (m.type === "card") return { short: label(m.brand).replace(/^./, (c) => c.toUpperCase()) + " •••• " + m.last4, sub: m.exp_month ? "Expires " + String(m.exp_month).padStart(2, "0") + "/" + m.exp_year : "Card", long: label(m.brand).replace(/^./, (c) => c.toUpperCase()) + " card ending " + m.last4, note: m.exp_month ? "Expires " + String(m.exp_month).padStart(2, "0") + "/" + m.exp_year + ". Charged on each invoice." : "Charged on each invoice.", icon: ICON_CARD };
     if (m.type === "bank") return { short: "Bank •••• " + m.last4, sub: m.bank_name || "Bank debit", long: (m.bank_name || "Bank account") + " ending " + m.last4, note: "Bank debit (ACH), pulled on each invoice.", icon: ICON_BANK };
     return { short: "On file", sub: "", long: "Payment method on file", note: "", icon: ICON_CARD };
@@ -391,11 +396,9 @@
       location.href = j.url;
     } catch (err) { if (await expiredOut(err)) return; flash("bad", err.message); }
   }
-  $("add").addEventListener("click", async () => {
-    $("add").disabled = true;
-    try { const j = await call("setup-session", { ref }, true); location.href = j.url; }
-    catch (err) { $("add").disabled = false; if (await expiredOut(err)) return; flash("bad", err.message); }
-  });
+  $("add").addEventListener("click", () => { $("chooser").classList.toggle("hidden"); });
+  document.querySelectorAll(".choice-btn").forEach((b) => b.addEventListener("click", () => choose(b.dataset.pay)));
+  $("choose-wire").addEventListener("click", () => choose("wire"));
 
   // ── the owner's screen: every account and its terms ──
   // Usage or Billing, kept in the address (#billing) so a refresh stays put
