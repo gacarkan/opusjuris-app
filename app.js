@@ -188,7 +188,7 @@
     $("owner-btn").classList.toggle("hidden", !wantOwner);
     if (wantOwner && $("main-owner").classList.contains("hidden")) showOwner();
     const st = $("status");
-    const standing = !p ? ["No plan", ""] : sub && sub.status === "past_due" ? ["Past due", "past_due"] : sub && sub.status === "unpaid" ? ["Unpaid", "unpaid"] : ["Active", "active"];
+    const standing = !p ? ["Custom plan", ""] : sub && sub.status === "past_due" ? ["Past due", "past_due"] : sub && sub.status === "unpaid" ? ["Unpaid", "unpaid"] : ["Active", "active"];
     st.textContent = standing[0]; st.className = "tag " + standing[1];
     // usage: the period, the total at the firm's rate, by day, by case, by person
     const mo = u.month, tk = u.tokens, s = u.seats;
@@ -213,12 +213,12 @@
     // next payment
     const price = p ? (p.discounted ? p.bank_monthly_usd : p.monthly_usd) : null;
     const today = new Date().toISOString().slice(0, 10);
-    if (!p) { $("st-next").textContent = "None"; $("st-next-s").textContent = "No plan on this account"; }
+    if (!p) { $("st-next").textContent = "Not scheduled"; $("st-next-s").textContent = "Once your terms are set"; }
     else if (sub && sub.current_period_end) { $("st-next").textContent = usd(price); $("st-next-s").textContent = (sub.cancel_at_period_end ? "Final, " : "Due ") + day(sub.current_period_end); }
     else if (p.starts_on > today) { $("st-next").textContent = usd(price); $("st-next-s").textContent = "First payment " + dateText(p.starts_on); }
     else { $("st-next").textContent = usd(price); $("st-next-s").textContent = "Each month"; }
-    $("st-plan").textContent = p ? usd(p.monthly_usd) + "/mo" : "None";
-    $("st-plan-s").textContent = p ? (p.term_months + (p.term_months === 1 ? " month" : " months") + ", ends " + dateText(p.ends_on)) : "Set after your agreement";
+    $("st-plan").textContent = "Custom";
+    $("st-plan-s").textContent = p ? (usd(p.monthly_usd) + " per month, ends " + dateText(p.ends_on)) : "Terms agreed with Opus Juris";
     const mt0 = methodText(m, pay);
     $("st-method").textContent = mt0.short; $("st-method-s").textContent = mt0.sub;
     // the subscription card
@@ -240,7 +240,7 @@
       const amt = i.status === "paid" ? i.amount_paid : i.amount_due;
       const act = i.status === "open" && i.hosted_invoice_url ? '<a class="btn sm" href="' + esc(i.hosted_invoice_url) + '" target="_blank" rel="noopener">Pay</a>' : (i.invoice_pdf ? '<a class="link" href="' + esc(i.invoice_pdf) + '" target="_blank" rel="noopener">PDF</a>' : "");
       return "<tr><td>" + esc(i.number || "Invoice") + '</td><td class="hide-sm">' + esc(day(i.created)) + '</td><td><span class="tag ' + esc(i.status) + '">' + esc(label(i.status)) + '</span></td><td class="num">' + esc(money(amt, i.currency)) + '</td><td class="num">' + act + "</td></tr>";
-    }).join("") + "</tbody></table>" : (p ? "Your first invoice appears here on " + dateText(p.starts_on) + "." : "No invoices yet.");
+    }).join("") + "</tbody></table>" : (p ? "Your first invoice appears here on " + dateText(p.starts_on) + "." : "Your invoices appear here once your plan starts.");
   }
   // Where the usage went: one list at a time, cases or people, each row a
   // name, a bar for its share and the amount.
@@ -350,7 +350,7 @@
   const ICON_WIRE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M14 6l6 6-6 6"/></svg>';
   function methodText(m, pay) {
     if (pay === "wire") return { short: "Wire", sub: "Invoiced by email", long: "Paying by wire", note: "Each invoice arrives by email with wire instructions.", icon: ICON_WIRE };
-    if (!m) return { short: "None", sub: "Add one to pay automatically", long: "No payment method on file", note: "Choose a way to pay below.", icon: ICON_CARD };
+    if (!m) return { short: "Not set", sub: "Add one to pay automatically", long: "No payment method on file", note: "Choose a way to pay below.", icon: ICON_CARD };
     if (m.type === "card") return { short: label(m.brand).replace(/^./, (c) => c.toUpperCase()) + " •••• " + m.last4, sub: m.exp_month ? "Expires " + String(m.exp_month).padStart(2, "0") + "/" + m.exp_year : "Card", long: label(m.brand).replace(/^./, (c) => c.toUpperCase()) + " card ending " + m.last4, note: m.exp_month ? "Expires " + String(m.exp_month).padStart(2, "0") + "/" + m.exp_year + ". Charged on each invoice." : "Charged on each invoice.", icon: ICON_CARD };
     if (m.type === "bank") return { short: "Bank •••• " + m.last4, sub: m.bank_name || "Bank debit", long: (m.bank_name || "Bank account") + " ending " + m.last4, note: "Bank debit (ACH), pulled on each invoice.", icon: ICON_BANK };
     return { short: "On file", sub: "", long: "Payment method on file", note: "", icon: ICON_CARD };
@@ -358,11 +358,11 @@
   // The subscription card: the terms as agreed and what comes next.
   function renderPlan(j, sub, price) {
     const p = j.plan, el = $("plan");
-    if (!p) { el.className = "empty"; el.textContent = "No plan on this account yet. Opus Juris sets the terms once your agreement is signed."; return; }
+    if (!p) { el.className = ""; el.innerHTML = '<div class="kv"><span class="k">Plan</span><span class="v">Custom</span></div><div class="note">Your terms are agreed with Opus Juris and appear here once set.</div>'; return; }
     el.className = "";
     const start = new Date(p.starts_on + "T00:00:00"), end = new Date(p.ends_on + "T00:00:00"), now = new Date();
     const frac = Math.max(0, Math.min(1, (now - start) / (end - start)));
-    const rows = [["Monthly", usd(p.monthly_usd)], ["Term", p.term_months + (p.term_months === 1 ? " month" : " months")], ["Period", dateText(p.starts_on) + " to " + dateText(p.ends_on)]];
+    const rows = [["Plan", "Custom"], ["Monthly", usd(p.monthly_usd)], ["Term", p.term_months + (p.term_months === 1 ? " month" : " months")], ["Period", dateText(p.starts_on) + " to " + dateText(p.ends_on)]];
     if (sub && sub.current_period_end) rows.push([sub.cancel_at_period_end ? "Final payment" : "Next payment", usd(price) + " on " + day(sub.current_period_end)]);
     else if (now < start) rows.push(["First payment", usd(price) + " on " + dateText(p.starts_on)]);
     el.innerHTML = '<div class="kv">' + rows.map((r) => '<span class="k">' + esc(r[0]) + '</span><span class="v">' + esc(r[1]) + "</span>").join("") + "</div>"
