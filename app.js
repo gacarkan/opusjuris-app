@@ -242,69 +242,78 @@
       return "<tr><td>" + esc(i.number || "Invoice") + '</td><td class="hide-sm">' + esc(day(i.created)) + '</td><td><span class="tag ' + esc(i.status) + '">' + esc(label(i.status)) + '</span></td><td class="num">' + esc(money(amt, i.currency)) + '</td><td class="num">' + act + "</td></tr>";
     }).join("") + "</tbody></table>" : (p ? "Your first invoice appears here on " + dateText(p.starts_on) + "." : "No invoices yet.");
   }
-  // The usage chart: the series (one row per day, model, person, case and
-  // feature) grouped the way the viewer picks, over the range they pick,
-  // as stacked bars with a readout on hover and a legend that toggles.
-  const PALETTE = ["#2563eb", "#0ea5e9", "#14b8a6", "#8b5cf6", "#f59e0b", "#ef4444", "#64748b", "#a3e635"];
-  const chartState = { range: 30, group: "total", hidden: {}, series: [] };
-  const GROUP_KEY = { total: () => "Total", model: (r) => r.model || "other", user: (r) => r.user || "unknown", case_ref: (r) => (r.case_ref === "other" ? "Other work" : "Case " + r.case_ref), feature: (r) => r.feature || "other" };
+  // The usage chart: one colour, dollar gridlines, date ticks, rounded bars,
+  // a tooltip that follows the pointer, and a table as the other view.
+  const chartState = { range: 30, view: "chart", series: [] };
+  const ICON_CHART = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>';
+  const ICON_TABLE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="10" y1="4" x2="10" y2="20"/></svg>';
   function renderChart(series) {
     chartState.series = series || [];
+    const st = chartState;
+    $("chart-range").innerHTML = [7, 30, 90].map((n) => '<button type="button" class="seg' + (st.range === n ? " on" : "") + '" data-range="' + n + '">' + n + " days</button>").join("");
+    $("chart-view").innerHTML = '<button type="button" class="seg' + (st.view === "chart" ? " on" : "") + '" data-view="chart" aria-label="Chart">' + ICON_CHART + '</button><button type="button" class="seg' + (st.view === "table" ? " on" : "") + '" data-view="table" aria-label="Table">' + ICON_TABLE + "</button>";
+    $("chart-range").querySelectorAll("[data-range]").forEach((b) => b.addEventListener("click", () => { st.range = Number(b.dataset.range); renderChart(st.series); }));
+    $("chart-view").querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => { st.view = b.dataset.view; renderChart(st.series); }));
     drawChart();
   }
-  function drawChart() {
-    const el = $("chart");
-    const st = chartState;
+  function chartDays() {
+    const st = chartState, byDay = {};
+    for (const r of st.series) { const d = String(r.day).slice(0, 10); byDay[d] = (byDay[d] || 0) + (Number(r.usd) || 0); }
     const days = [];
-    for (let k = st.range - 1; k >= 0; k--) { const d = new Date(); d.setDate(d.getDate() - k); days.push(d.toISOString().slice(0, 10)); }
-    const keyOf = GROUP_KEY[st.group];
-    const totals = {}, byDay = {};
-    for (const r of st.series) {
-      const d = String(r.day).slice(0, 10); if (days.indexOf(d) < 0) continue;
-      const key = keyOf(r), v = Number(r.usd) || 0;
-      totals[key] = (totals[key] || 0) + v;
-      (byDay[d] = byDay[d] || {})[key] = ((byDay[d] || {})[key] || 0) + v;
+    for (let k = st.range - 1; k >= 0; k--) { const d = new Date(); d.setDate(d.getDate() - k); const key = d.toISOString().slice(0, 10); days.push({ key, v: byDay[key] || 0 }); }
+    return days;
+  }
+  // a round step for the gridlines: 1, 2 or 5 times a power of ten
+  function niceStep(max, lines) {
+    const raw = max / lines, p = Math.pow(10, Math.floor(Math.log10(raw || 1)));
+    for (const m of [1, 2, 5, 10]) { if (m * p >= raw) return m * p; }
+    return 10 * p;
+  }
+  function drawChart() {
+    const el = $("chart"), st = chartState, days = chartDays();
+    if (st.view === "table") {
+      const rows = days.slice().reverse().filter((d) => d.v > 0);
+      const total = days.reduce((s, d) => s + d.v, 0);
+      el.innerHTML = rows.length ? "<table><thead><tr><th>Day</th><th class=\"num\">Usage</th></tr></thead><tbody>" + rows.map((d) => "<tr><td>" + esc(dateText(d.key)) + '</td><td class="num">' + esc(usd(d.v)) + "</td></tr>").join("") + '<tr><td><b>Total, ' + st.range + ' days</b></td><td class="num"><b>' + esc(usd(total)) + "</b></td></tr></tbody></table>" : '<div class="empty">No usage in the last ' + st.range + " days.</div>";
+      return;
     }
-    const keys = Object.keys(totals).sort((x, y) => totals[y] - totals[x]);
-    const shown = keys.slice(0, 8);
-    const rest = keys.slice(8);
-    if (rest.length) { shown.push("Everything else"); for (const d of Object.keys(byDay)) { let s = 0; for (const k of rest) { s += byDay[d][k] || 0; delete byDay[d][k]; } if (s) byDay[d]["Everything else"] = s; } totals["Everything else"] = rest.reduce((s, k) => s + totals[k], 0); }
-    const color = {}; shown.forEach((k, n) => { color[k] = PALETTE[n % PALETTE.length]; });
-    const visible = shown.filter((k) => !st.hidden[k]);
-    const dayTotal = (d) => visible.reduce((s, k) => s + ((byDay[d] || {})[k] || 0), 0);
-    const max = Math.max(0.01, ...days.map(dayTotal));
-    const W = 720, H = 170, top = 10, bottom = 4, bw = W / days.length, gap = Math.max(1, Math.min(4, bw * 0.25));
+    const W = Math.max(320, el.clientWidth || 640), H = 240, L = 44, R = 8, T = 10, B = 26;
+    const max = Math.max(...days.map((d) => d.v), 0);
+    const step = max > 0 ? niceStep(max, 4) : 1;
+    const top = max > 0 ? Math.ceil(max / step) * step : 4;
+    const iw = W - L - R, ih = H - T - B;
+    const y = (v) => T + ih - (v / top) * ih;
+    let g = "";
+    for (let v = 0; v <= top + 1e-9; v += step) {
+      g += '<line class="grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v).toFixed(1) + '" y2="' + y(v).toFixed(1) + '"/>';
+      g += '<text class="ylab" x="' + (L - 8) + '" y="' + (y(v) + 4).toFixed(1) + '" text-anchor="end">' + esc(usd(v).replace(/\.00$/, "")) + "</text>";
+    }
+    const slot = iw / days.length, bw = Math.max(2, Math.min(slot * 0.62, 28));
     let bars = "";
     days.forEach((d, n) => {
-      let y = H - bottom;
-      for (const k of visible) {
-        const v = (byDay[d] || {})[k] || 0; if (!v) continue;
-        const h = Math.max(1, (v / max) * (H - top - bottom)); y -= h;
-        bars += '<rect data-day="' + d + '" x="' + (n * bw + gap / 2).toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (bw - gap).toFixed(1) + '" height="' + h.toFixed(1) + '" fill="' + color[k] + '"/>';
-      }
-      if (!dayTotal(d)) bars += '<rect data-day="' + d + '" x="' + (n * bw + gap / 2).toFixed(1) + '" y="' + (H - bottom - 1) + '" width="' + (bw - gap).toFixed(1) + '" height="1" fill="#e2e8f0"/>';
-      bars += '<rect class="hit" data-day="' + d + '" x="' + (n * bw).toFixed(1) + '" y="0" width="' + bw.toFixed(1) + '" height="' + H + '" fill="transparent"/>';
+      const x = L + n * slot + (slot - bw) / 2, hgt = d.v > 0 ? Math.max(2, (d.v / top) * ih) : 0;
+      if (hgt) bars += '<rect class="cbar" data-i="' + n + '" x="' + x.toFixed(1) + '" y="' + (T + ih - hgt).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hgt.toFixed(1) + '" rx="3"/>';
+      bars += '<rect class="hit" data-i="' + n + '" x="' + (L + n * slot).toFixed(1) + '" y="' + T + '" width="' + slot.toFixed(1) + '" height="' + ih + '"/>';
     });
-    const sum = days.reduce((s, d) => s + dayTotal(d), 0);
-    const ctl = (name, opts, cur) => opts.map((o) => '<button type="button" class="seg' + (o.v === cur ? " on" : "") + '" data-' + name + '="' + o.v + '">' + o.t + "</button>").join("");
-    el.innerHTML = '<div class="chart-bar"><div class="seg-group">' + ctl("range", [{ v: 7, t: "7 days" }, { v: 30, t: "30 days" }, { v: 90, t: "90 days" }], st.range) + '</div><div class="seg-group">' + ctl("group", [{ v: "total", t: "Total" }, { v: "model", t: "Model" }, { v: "user", t: "Person" }, { v: "case_ref", t: "Case" }, { v: "feature", t: "Feature" }], st.group) + "</div></div>"
-      + '<div class="chart-read" id="chart-read"><b>' + esc(usd(sum)) + "</b><span>" + st.range + " days" + (st.group !== "total" ? ", by " + ({ model: "model", user: "person", case_ref: "case", feature: "feature" })[st.group] : "") + "</span></div>"
-      + '<svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" aria-label="Usage by day">' + bars + "</svg>"
-      + '<div class="axis"><span>' + esc(dateText(days[0])) + "</span><span>" + esc(dateText(days[days.length - 1])) + "</span></div>"
-      + (st.group !== "total" ? '<div class="legend">' + shown.map((k) => '<button type="button" class="lg' + (st.hidden[k] ? " off" : "") + '" data-key="' + esc(k) + '"><i style="background:' + color[k] + '"></i>' + esc(k) + '<span>' + esc(usd(totals[k])) + "</span></button>").join("") + "</div>" : "");
-    el.querySelectorAll("[data-range]").forEach((b) => b.addEventListener("click", () => { st.range = Number(b.dataset.range); drawChart(); }));
-    el.querySelectorAll("[data-group]").forEach((b) => b.addEventListener("click", () => { st.group = b.dataset.group; st.hidden = {}; drawChart(); }));
-    el.querySelectorAll(".lg").forEach((b) => b.addEventListener("click", () => { st.hidden[b.dataset.key] = !st.hidden[b.dataset.key]; drawChart(); }));
-    const read = $("chart-read");
-    const idle = read.innerHTML;
-    el.querySelectorAll("svg .hit").forEach((r) => {
+    const every = days.length > 60 ? 15 : days.length > 14 ? 5 : 1;
+    let xl = "";
+    days.forEach((d, n) => { if (n % every === 0 || n === days.length - 1) xl += '<text class="xlab" x="' + (L + n * slot + slot / 2).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(new Date(d.key + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })) + "</text>"; });
+    el.innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" width="' + W + '" height="' + H + '" aria-label="Usage by day">' + g + bars + xl + "</svg>" + (max > 0 ? "" : '<div class="empty" style="position:absolute;inset:0;display:grid;place-items:center">No usage in the last ' + st.range + " days.</div>");
+    const svg = el.querySelector("svg");
+    let tip = null;
+    svg.querySelectorAll(".hit").forEach((r) => {
       r.addEventListener("mouseenter", () => {
-        const d = r.dataset.day, parts = visible.filter((k) => (byDay[d] || {})[k]).map((k) => '<em><i style="background:' + color[k] + '"></i>' + esc(k) + " " + esc(usd(byDay[d][k])) + "</em>");
-        read.innerHTML = "<b>" + esc(usd(dayTotal(d))) + "</b><span>" + esc(dateText(d)) + "</span>" + (st.group !== "total" ? '<div class="parts">' + parts.join("") + "</div>" : "");
+        const n = Number(r.dataset.i), d = days[n];
+        svg.querySelectorAll(".cbar").forEach((b) => b.classList.toggle("dim", b.dataset.i !== String(n)));
+        if (!tip) { tip = document.createElement("div"); tip.className = "tip"; el.appendChild(tip); }
+        tip.innerHTML = "<b>" + esc(usd(d.v)) + "</b>" + esc(dateText(d.key));
+        tip.style.left = (L + n * slot + slot / 2) * (el.clientWidth / W) + "px";
+        tip.style.top = (d.v > 0 ? y(d.v) : T + ih) * (el.clientWidth / W) * (H / H) + "px";
       });
-      r.addEventListener("mouseleave", () => { read.innerHTML = idle; });
+      r.addEventListener("mouseleave", () => { svg.querySelectorAll(".cbar").forEach((b) => b.classList.remove("dim")); if (tip) { tip.remove(); tip = null; } });
     });
   }
+  window.addEventListener("resize", () => { if (current && chartState.view === "chart") drawChart(); });
   // One description of the way the firm pays, used by the tile and the card.
   const ICON_CARD = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>';
   const ICON_BANK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18"/><path d="M12 3l9 7H3l9-7z"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8"/><path d="M3 21h18"/></svg>';
@@ -327,7 +336,7 @@
     if (sub && sub.current_period_end) rows.push([sub.cancel_at_period_end ? "Final payment" : "Next payment", usd(price) + " on " + day(sub.current_period_end)]);
     else if (now < start) rows.push(["First payment", usd(price) + " on " + dateText(p.starts_on)]);
     el.innerHTML = '<div class="kv">' + rows.map((r) => '<span class="k">' + esc(r[0]) + '</span><span class="v">' + esc(r[1]) + "</span>").join("") + "</div>"
-      + '<div class="bar"><i style="width:' + Math.round(frac * 100) + '%"></i></div>';
+      + '<div class="cbar"><i style="width:' + Math.round(frac * 100) + '%"></i></div>';
   }
   // The ways to pay, as a plain list; the current one is marked.
   function renderChoices(j, pay) {
