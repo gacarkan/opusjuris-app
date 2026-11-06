@@ -94,6 +94,9 @@
   .skel { display: inline-block; height: 1em; width: 8em; max-width: 100%; border-radius: 6px; vertical-align: middle; background: linear-gradient(90deg, var(--line) 25%, var(--bg) 40%, var(--line) 55%); background-size: 300% 100%; animation: shimmer 1.3s ease-in-out infinite; }
   .skel.line { display: block; height: 12px; margin: 10px 0; }
   .skel.row { display: block; height: 58px; border-radius: 10px; margin: 8px 0; }
+  .skel-chart { display: flex; align-items: flex-end; gap: 4px; height: 210px; padding-left: 44px; }
+  .skel-chart i { flex: 1; min-width: 0; border-radius: 3px 3px 0 0; background: linear-gradient(90deg, var(--line) 25%, var(--bg) 40%, var(--line) 55%); background-size: 300% 100%; animation: shimmer 1.3s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .skel-chart i { animation: none; } }
   @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
   @media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
   .tag:empty { display: none; }
@@ -275,6 +278,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="app.js?v=26"></script>
+  <script src="app.js?v=27"></script>
 </body>
 </html>

@@ -144,7 +144,9 @@
     $("status").textContent = ""; $("sub-status").textContent = "";
     for (const id of ["st-usage", "st-tokens", "st-seats", "st-next"]) { $(id).innerHTML = sk("72%"); $(id + "-s").innerHTML = sk("55%"); }
     $("month-total").innerHTML = sk("140px"); $("month-note").innerHTML = sk("220px"); $("usage-period").textContent = "";
-    $("chart").innerHTML = '<span class="skel row" style="height:150px"></span>';
+    const hs = [18, 30, 22, 46, 38, 26, 60, 44, 32, 52, 70, 48, 36, 58, 42, 28, 64, 50, 34, 56, 72, 40, 30, 62, 46, 38, 54, 44, 26, 48];
+    $("chart").innerHTML = '<div class="skel-chart">' + hs.map((p) => '<i style="height:' + p + '%"></i>').join("") + '</div><div class="axis"><span class="skel" style="width:52px"></span><span class="skel" style="width:52px"></span></div>';
+    $("chart-range").innerHTML = '<span class="skel" style="width:150px;height:30px;border-radius:8px"></span>'; $("chart-view").innerHTML = '<span class="skel" style="width:64px;height:30px;border-radius:8px"></span>';
     $("bd-list").innerHTML = lines(4); $("bd-tabs").innerHTML = ""; $("bd-sub").textContent = ""; $("tokens-warn").textContent = "";
     $("plan").className = ""; $("plan").innerHTML = lines(4);
     $("method-icon").innerHTML = ""; $("method").innerHTML = sk("160px"); $("method-note").innerHTML = sk("120px");
