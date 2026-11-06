@@ -206,6 +206,7 @@
     $("st-tokens-s").textContent = onTokens ? "of " + tokens(tk.granted) + " granted" : "Not on tokens";
     $("st-seats").textContent = s ? String(s.used) : "n/a";
     $("st-seats-s").textContent = s && s.seats ? "of " + s.seats + " included" : "in use";
+    chartState.since = since;
     renderChart(u.series || []);
     renderBreakdown(mo, periodText);
     $("tokens-warn").textContent = onTokens && Number(tk.left) <= 0 ? "No tokens left: drafting, analysis and chat are paused until more tokens are added." : "";
@@ -277,7 +278,8 @@
     const st = chartState, byDay = {};
     for (const r of st.series) { const d = String(r.day).slice(0, 10); byDay[d] = (byDay[d] || 0) + (Number(r.usd) || 0); }
     const days = [];
-    for (let k = st.range - 1; k >= 0; k--) { const d = new Date(); d.setDate(d.getDate() - k); const key = d.toISOString().slice(0, 10); days.push({ key, v: byDay[key] || 0 }); }
+    // days before the tokens began are not charged and show as empty
+    for (let k = st.range - 1; k >= 0; k--) { const d = new Date(); d.setDate(d.getDate() - k); const key = d.toISOString().slice(0, 10); days.push({ key, v: st.since && key < st.since ? 0 : (byDay[key] || 0) }); }
     return days;
   }
   // a round step for the gridlines: 1, 2 or 5 times a power of ten
@@ -291,7 +293,7 @@
     if (st.view === "table") {
       const rows = days.slice().reverse().filter((d) => d.v > 0);
       const total = days.reduce((s, d) => s + d.v, 0);
-      el.innerHTML = rows.length ? "<table><thead><tr><th>Day</th><th class=\"num\">Usage</th></tr></thead><tbody>" + rows.map((d) => "<tr><td>" + esc(dateText(d.key)) + '</td><td class="num">' + esc(usd(d.v)) + "</td></tr>").join("") + '<tr><td><b>Total, ' + st.range + ' days</b></td><td class="num"><b>' + esc(usd(total)) + "</b></td></tr></tbody></table>" : '<div class="empty">No usage in the last ' + st.range + " days.</div>";
+      el.innerHTML = rows.length ? "<table><thead><tr><th>Day</th><th class=\"num\">Usage</th></tr></thead><tbody>" + rows.map((d) => "<tr><td>" + esc(dateText(d.key)) + '</td><td class="num">' + esc(usd(d.v)) + "</td></tr>").join("") + '<tr><td><b>' + (st.since && days[0].key < st.since ? "Total since " + dateText(st.since) : "Total, " + st.range + " days") + '</b></td><td class="num"><b>' + esc(usd(total)) + "</b></td></tr></tbody></table>" : '<div class="empty">No usage in the last ' + st.range + " days.</div>";
       return;
     }
     const W = Math.max(320, el.clientWidth || 640), H = 240, L = 44, R = 8, T = 10, B = 26;
