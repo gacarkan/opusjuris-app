@@ -46,7 +46,7 @@
   const tokens = (v) => (Math.round((Number(v) || 0) * 100) / 100).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   async function expiredOut(err, where) {
     if (err.message !== "expired") return false;
-    await sb.auth.signOut();
+    await sb.auth.signOut({ scope: "local" });
     showSignin("Please sign in again.");
     return true;
   }
@@ -131,7 +131,7 @@
   }
   $("form-code").addEventListener("submit", (e) => { e.preventDefault(); verify(); });
   $("back").addEventListener("click", () => { clearCode(); showSignin(""); });
-  $("signout").addEventListener("click", async () => { await sb.auth.signOut(); setRef(""); location.href = location.pathname; });
+  $("signout").addEventListener("click", async () => { await sb.auth.signOut({ scope: "local" }); setRef(""); location.href = location.pathname; });
 
   // ── the account ──
   function flash(kind, text) { const f = $("flash"); f.className = "banner " + kind; f.textContent = text; }
@@ -358,7 +358,7 @@
     const { data } = await sb.auth.getSession();
     ref = getRef();
     if (data && data.session && ref) return enter();
-    if (data && data.session) await sb.auth.signOut();
+    if (data && data.session) await sb.auth.signOut({ scope: "local" });
     setRef("");
     showSignin("");
   })();
