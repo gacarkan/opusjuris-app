@@ -190,7 +190,9 @@
     // usage: the period, the total at the firm's rate, by day, by case, by person
     const mo = u.month, tk = u.tokens, s = u.seats;
     const onTokens = tk && tk.left !== null && tk.left !== undefined;
-    const since = mo && mo.on_tokens && mo.window_start ? String(mo.window_start).slice(0, 10) : null;
+    // the window start is a moment in UTC; shown as the local day it fell on
+    const localDay = (iso) => { const d = new Date(iso); return isNaN(d) ? String(iso).slice(0, 10) : new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+    const since = mo && mo.on_tokens && mo.window_start ? localDay(mo.window_start) : null;
     const periodText = since ? "since " + dateText(since) : "this month";
     $("usage-title").textContent = "Usage";
     $("usage-period").textContent = periodText.replace(/^./, (c) => c.toUpperCase());
