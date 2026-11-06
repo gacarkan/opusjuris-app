@@ -321,13 +321,13 @@
     svg.querySelectorAll(".hit").forEach((r) => {
       r.addEventListener("mouseenter", () => {
         const n = Number(r.dataset.i), d = days[n];
-        svg.querySelectorAll(".cbar").forEach((b) => b.classList.toggle("dim", b.dataset.i !== String(n)));
+
         if (!tip) { tip = document.createElement("div"); tip.className = "tip"; el.appendChild(tip); }
         tip.innerHTML = "<b>" + esc(usd(d.v)) + "</b>" + esc(dateText(d.key));
         tip.style.left = (L + n * slot + slot / 2) * (el.clientWidth / W) + "px";
         tip.style.top = (d.v > 0 ? y(d.v) : T + ih) * (el.clientWidth / W) * (H / H) + "px";
       });
-      r.addEventListener("mouseleave", () => { svg.querySelectorAll(".cbar").forEach((b) => b.classList.remove("dim")); if (tip) { tip.remove(); tip = null; } });
+      r.addEventListener("mouseleave", () => { if (tip) { tip.remove(); tip = null; } });
     });
   }
   window.addEventListener("resize", () => { if (current && chartState.view === "chart") drawChart(); });
