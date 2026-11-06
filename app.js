@@ -142,13 +142,14 @@
     const lines = (n) => Array.from({ length: n }, () => '<span class="skel line"></span>').join("");
     $("firm").innerHTML = sk("220px");
     $("status").textContent = ""; $("sub-status").textContent = "";
-    for (const id of ["st-next", "st-plan", "st-method", "st-tokens"]) { $(id).innerHTML = sk("72%"); $(id + "-s").innerHTML = sk("55%"); }
+    for (const id of ["st-usage", "st-tokens", "st-seats", "st-next"]) { $(id).innerHTML = sk("72%"); $(id + "-s").innerHTML = sk("55%"); }
+    $("month-total").innerHTML = sk("140px"); $("month-note").innerHTML = sk("220px"); $("usage-period").textContent = "";
+    $("chart").innerHTML = '<span class="skel row" style="height:150px"></span>';
+    $("cases").innerHTML = lines(4); $("people").innerHTML = lines(4); $("tokens-warn").textContent = "";
     $("plan").className = ""; $("plan").innerHTML = lines(4);
-    $("invoices").className = ""; $("invoices").innerHTML = lines(3);
     $("method-icon").innerHTML = ""; $("method").innerHTML = sk("160px"); $("method-note").innerHTML = sk("120px");
-    $("add").textContent = ""; $("add").classList.add("hidden");
-    $("choices").innerHTML = '<span class="skel row"></span><span class="skel row"></span><span class="skel row"></span>';
-    $("month-total").innerHTML = sk("110px"); $("month-note").innerHTML = sk("200px"); $("cases").innerHTML = lines(3); $("tokens-warn").textContent = "";
+    $("add").textContent = ""; $("choices").innerHTML = lines(3); $("pay-note").textContent = "";
+    $("invoices").className = ""; $("invoices").innerHTML = lines(2);
   }
   async function enter() {
     $("signin").classList.add("hidden");
@@ -180,55 +181,56 @@
     const pay = (p && p.pay_by) || "auto";
     $("me").textContent = a.admin_email;
     $("firm").textContent = a.firm_name;
-
-    // the staff screen is reached by address (#accounts), not from the header;
-    // the button shows only while it is open, to come back
     const wantOwner = j.is_owner && location.hash === "#accounts";
     $("owner-btn").classList.toggle("hidden", !wantOwner);
     if (wantOwner && $("main-owner").classList.contains("hidden")) showOwner();
-    // the account's standing, in one word
     const st = $("status");
     const standing = !p ? ["No plan", ""] : sub && sub.status === "past_due" ? ["Past due", "past_due"] : sub && sub.status === "unpaid" ? ["Unpaid", "unpaid"] : ["Active", "active"];
     st.textContent = standing[0]; st.className = "tag " + standing[1];
-    // the four tiles
+    // usage: the period, the total at the firm's rate, by day, by case, by person
+    const mo = u.month, tk = u.tokens, s = u.seats;
+    const onTokens = tk && tk.left !== null && tk.left !== undefined;
+    const since = mo && mo.on_tokens && mo.window_start ? String(mo.window_start).slice(0, 10) : null;
+    const periodText = since ? "since " + dateText(since) : "this month";
+    $("usage-title").textContent = "Usage";
+    $("usage-period").textContent = periodText.replace(/^./, (c) => c.toUpperCase());
+    const total = mo && mo.total_usd != null ? Number(mo.total_usd) : null;
+    $("st-usage-k").textContent = "Usage " + periodText;
+    $("st-usage").textContent = total != null ? usd(total) : (onTokens ? tokens(tk.used) + " tokens" : "n/a");
+    $("st-usage-s").textContent = mo && mo.days_left != null && !since ? mo.days_left + " days left" : (mo && mo.usage_rate != null && Number(mo.usage_rate) !== 1 ? "At the firm\u2019s rate" : "");
+    $("month-total").textContent = total != null ? usd(total) : "";
+    $("month-note").textContent = total != null ? (onTokens ? tokens(tk.used) + " tokens used " + periodText + (Number(mo.usage_rate) !== 1 ? ", at the firm\u2019s rate" : "") : "At the firm\u2019s rate") : "No usage recorded yet.";
+    $("st-tokens").textContent = onTokens ? tokens(tk.left) : "n/a";
+    $("st-tokens-s").textContent = onTokens ? "of " + tokens(tk.granted) + " granted" : "Not on tokens";
+    $("st-seats").textContent = s ? String(s.used) : "n/a";
+    $("st-seats-s").textContent = s && s.seats ? "of " + s.seats + " included" : "in use";
+    renderChart((mo && mo.by_day) || []);
+    const base = total || 0;
+    const pct = (v) => (base > 0 ? '<span class="pct">' + Math.round(Number(v) / base * 100) + "%</span>" : "");
+    const cases = (mo && mo.by_case) || [];
+    $("cases").innerHTML = cases.length ? cases.slice(0, 6).map((c) => "<div><span>" + esc(c.case_ref === "other" ? "Other work" : "Case " + c.case_ref) + "</span><b>" + esc(usd(c.usd)) + pct(c.usd) + "</b></div>").join("") : '<div><span class="empty">Nothing yet</span></div>';
+    const people = (mo && mo.by_user) || [];
+    $("people").innerHTML = people.length ? people.slice(0, 6).map((x) => "<div><span>" + esc(x.name || x.email) + "</span><b>" + esc(usd(x.usd)) + pct(x.usd) + "</b></div>").join("") : '<div><span class="empty">Nothing yet</span></div>';
+    $("tokens-warn").textContent = onTokens && Number(tk.left) <= 0 ? "No tokens left: drafting, analysis and chat are paused until more tokens are added." : "";
+    // next payment
     const price = p ? (p.discounted ? p.bank_monthly_usd : p.monthly_usd) : null;
     const today = new Date().toISOString().slice(0, 10);
     if (!p) { $("st-next").textContent = "None"; $("st-next-s").textContent = "No plan on this account"; }
     else if (sub && sub.current_period_end) { $("st-next").textContent = usd(price); $("st-next-s").textContent = (sub.cancel_at_period_end ? "Final, " : "Due ") + day(sub.current_period_end); }
     else if (p.starts_on > today) { $("st-next").textContent = usd(price); $("st-next-s").textContent = "First payment " + dateText(p.starts_on); }
     else { $("st-next").textContent = usd(price); $("st-next-s").textContent = "Each month"; }
-    $("st-plan").textContent = p ? usd(p.monthly_usd) + "/mo" : "None";
-    $("st-plan-s").textContent = p ? (p.term_months + (p.term_months === 1 ? " month" : " months") + ", ends " + dateText(p.ends_on)) : "Set after your agreement";
-    const mt = methodText(m, pay);
-    $("st-method").textContent = mt.short; $("st-method-s").textContent = mt.sub;
-    const tk = u.tokens, onTokens = tk && tk.left !== null && tk.left !== undefined;
-    $("st-tokens").textContent = onTokens ? tokens(tk.left) : "n/a";
-    $("st-tokens-s").textContent = onTokens ? "of " + tokens(tk.granted) + " granted" : "Not on tokens";
     // the subscription card
     const ss = $("sub-status");
     if (sub) { ss.textContent = label(sub.status); ss.className = "tag " + esc(sub.status); } else { ss.textContent = p ? "Not started" : ""; ss.className = "tag"; }
     renderPlan(j, sub, price);
-    // the payment method and the ways to pay
+    // billing: the method on file and the ways to pay
+    const mt = methodText(m, pay);
     $("method-icon").innerHTML = mt.icon;
     $("method").textContent = mt.long;
     $("method-note").textContent = mt.note;
-    $("add").textContent = m ? "Change" : "Add";
-    $("add").classList.toggle("hidden", pay === "wire" && !m);
+    $("add").textContent = m ? "Change" : "";
     renderChoices(j, pay);
-    // usage this month
-    const mo = u.month, s = u.seats;
-    $("month-total").textContent = mo && mo.total_usd != null ? usd(mo.total_usd) : (onTokens ? tokens(tk.used) + " tokens used" : "");
-    // the window: the calendar month, or since the first token grant on a firm on tokens
-    const since = mo && mo.on_tokens && mo.window_start ? String(mo.window_start).slice(0, 10) : null;
-    $("usage-title").textContent = since ? "Usage since " + dateText(since) : "Usage this month";
-    const bits = [];
-    if (mo && mo.usage_rate != null && Number(mo.usage_rate) !== 1) bits.push("at the firm’s rate");
-    if (mo && mo.days_left != null && !since) bits.push(mo.days_left + " days left in the month");
-    if (s && s.seats) bits.push(s.used + " of " + s.seats + " seats in use"); else if (s) bits.push(s.used + " seats in use");
-    $("month-note").textContent = bits.join(" \u00b7 ") || "No usage recorded yet.";
-    const cases = (mo && mo.by_case) || [];
-    $("cases").innerHTML = cases.slice(0, 5).map((c) => "<div><span>" + esc(c.case_ref === "other" ? "Other work" : "Case " + c.case_ref) + "</span><b>" + esc(usd(c.usd)) + "</b></div>").join("");
-    $("tokens-warn").textContent = onTokens && Number(tk.left) <= 0 ? "No tokens left: drafting, analysis and chat are paused until more tokens are added." : "";
+    $("pay-note").textContent = p ? "Bank payment, by debit or wire, is " + String(p.bank_discount_pct).replace(/\.0$/, "") + "% below the card price. Details are entered on Stripe\u2019s secure page and never stored by Opus Juris." : "Card and bank details are entered on Stripe\u2019s secure page and never stored by Opus Juris.";
     // invoices
     const inv = j.invoices || [];
     $("invoices").className = inv.length ? "" : "empty";
@@ -237,6 +239,19 @@
       const act = i.status === "open" && i.hosted_invoice_url ? '<a class="btn sm" href="' + esc(i.hosted_invoice_url) + '" target="_blank" rel="noopener">Pay</a>' : (i.invoice_pdf ? '<a class="link" href="' + esc(i.invoice_pdf) + '" target="_blank" rel="noopener">PDF</a>' : "");
       return "<tr><td>" + esc(i.number || "Invoice") + '</td><td class="hide-sm">' + esc(day(i.created)) + '</td><td><span class="tag ' + esc(i.status) + '">' + esc(label(i.status)) + '</span></td><td class="num">' + esc(money(amt, i.currency)) + '</td><td class="num">' + act + "</td></tr>";
     }).join("") + "</tbody></table>" : (p ? "Your first invoice appears here on " + dateText(p.starts_on) + "." : "No invoices yet.");
+  }
+  // Daily usage over the last 30 days as plain bars.
+  function renderChart(days) {
+    const el = $("chart");
+    const byDay = {};
+    days.forEach((d) => { byDay[String(d.day).slice(0, 10)] = Number(d.usd) || 0; });
+    const list = [];
+    for (let k = 29; k >= 0; k--) { const d = new Date(); d.setDate(d.getDate() - k); const key = d.toISOString().slice(0, 10); list.push({ key, v: byDay[key] || 0 }); }
+    const max = Math.max(1, ...list.map((x) => x.v));
+    const W = 600, H = 150, pad = 2, bw = W / list.length;
+    const bars = list.map((x, i) => { const h = Math.round((x.v / max) * (H - 18)); return '<rect x="' + (i * bw + pad).toFixed(1) + '" y="' + (H - h) + '" width="' + (bw - pad * 2).toFixed(1) + '" height="' + h + '" rx="2" fill="' + (x.v ? "#2563eb" : "#e2e8f0") + '"><title>' + esc(dateText(x.key)) + ": " + esc(usd(x.v)) + "</title></rect>"; }).join("");
+    el.innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" aria-label="Usage by day">' + bars + "</svg>"
+      + '<div class="axis"><span>' + esc(dateText(list[0].key)) + "</span><span>Peak " + esc(usd(max === 1 && !list.some((x) => x.v) ? 0 : max)) + " a day</span><span>" + esc(dateText(list[list.length - 1].key)) + "</span></div>";
   }
   // One description of the way the firm pays, used by the tile and the card.
   const ICON_CARD = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>';
@@ -249,38 +264,34 @@
     if (m.type === "bank") return { short: "Bank \u2022\u2022\u2022\u2022 " + m.last4, sub: m.bank_name || "Bank debit", long: (m.bank_name || "Bank account") + " ending " + m.last4, note: "Bank debit (ACH), pulled on each invoice.", icon: ICON_BANK };
     return { short: "On file", sub: "", long: "Payment method on file", note: "", icon: ICON_CARD };
   }
-  // The subscription card: the terms as agreed, how far along the term is,
-  // and what comes next.
+  // The subscription card: the terms as agreed and what comes next.
   function renderPlan(j, sub, price) {
     const p = j.plan, el = $("plan");
     if (!p) { el.className = "empty"; el.textContent = "No plan on this account yet. Opus Juris sets the terms once your agreement is signed."; return; }
     el.className = "";
     const start = new Date(p.starts_on + "T00:00:00"), end = new Date(p.ends_on + "T00:00:00"), now = new Date();
     const frac = Math.max(0, Math.min(1, (now - start) / (end - start)));
-    const monthsIn = Math.min(p.term_months, Math.max(0, Math.floor(frac * p.term_months)));
-    const rows = [["Monthly amount", usd(p.monthly_usd) + (p.discounted ? " (" + usd(p.bank_monthly_usd) + " by bank)" : "")], ["Term", p.term_months + (p.term_months === 1 ? " month" : " months")], ["Starts", dateText(p.starts_on)], ["Ends", dateText(p.ends_on)]];
-    let next = "";
-    if (sub && sub.current_period_end) next = '<div class="next"><div><b>' + esc(usd(price)) + '</b> <span>' + (sub.cancel_at_period_end ? "final payment" : "next payment") + "</span></div><span>" + esc(day(sub.current_period_end)) + "</span></div>";
-    else if (now < start) next = '<div class="next"><div><b>' + esc(usd(price)) + '</b> <span>first payment</span></div><span>' + esc(dateText(p.starts_on)) + "</span></div>";
+    const rows = [["Monthly", usd(p.monthly_usd)], ["Term", p.term_months + (p.term_months === 1 ? " month" : " months")], ["Period", dateText(p.starts_on) + " to " + dateText(p.ends_on)]];
+    if (sub && sub.current_period_end) rows.push([sub.cancel_at_period_end ? "Final payment" : "Next payment", usd(price) + " on " + day(sub.current_period_end)]);
+    else if (now < start) rows.push(["First payment", usd(price) + " on " + dateText(p.starts_on)]);
     el.innerHTML = '<div class="kv">' + rows.map((r) => '<span class="k">' + esc(r[0]) + '</span><span class="v">' + esc(r[1]) + "</span>").join("") + "</div>"
-      + '<div class="bar"><i style="width:' + Math.round(frac * 100) + '%"></i></div><div class="sub">' + (now < start ? "Starts " + dateText(p.starts_on) : now >= end ? "Term complete" : monthsIn + " of " + p.term_months + " months in") + "</div>" + next
-      + '<div class="note">Paying from a bank account, by debit through this page or by wire, is ' + esc(String(p.bank_discount_pct).replace(/\.0$/, "")) + "% less than paying by card.</div>";
+      + '<div class="bar"><i style="width:' + Math.round(frac * 100) + '%"></i></div>';
   }
-  // The three ways to pay, the current one marked.
+  // The ways to pay, as a plain list; the current one is marked.
   function renderChoices(j, pay) {
     const p = j.plan, m = j.method;
     const cur = pay === "wire" ? "wire" : (m && m.type === "bank") ? "bank" : (m && m.type === "card") ? "card" : "";
-    const price = (bank) => (p ? (bank ? usd(p.bank_monthly_usd) : usd(p.monthly_usd)) + "/mo" : "");
+    const price = (bank) => (p ? (bank ? usd(p.bank_monthly_usd) : usd(p.monthly_usd)) + " / month" : "");
     const opts = [
-      { k: "bank", t: "Bank debit", s: "Lowest cost, automatic", e: price(true), rec: true },
-      { k: "card", t: "Card", s: "Automatic, list price", e: price(false) },
-      { k: "wire", t: "Wire", s: "Invoiced by email, you send it", e: price(true) },
+      { k: "bank", t: "Bank debit", s: "ACH, drawn on each invoice", e: price(true) },
+      { k: "card", t: "Card", s: "Charged on each invoice", e: price(false) },
+      { k: "wire", t: "Wire", s: "Invoiced by email, paid by wire", e: price(true) },
     ];
-    $("choices").innerHTML = opts.map((o) => '<button type="button" class="payopt' + (cur === o.k ? " on" : "") + '" data-pay="' + o.k + '"><span class="dot"></span><b>' + esc(o.t) + (o.rec ? '<span class="tag on">3% off</span>' : "") + '</b><span class="d">' + esc(o.s) + "</span><em>" + esc(o.e) + "</em></button>").join("");
+    $("choices").innerHTML = opts.map((o) => '<button type="button" class="payrow' + (cur === o.k ? " on" : "") + '" data-pay="' + o.k + '"><span class="radio"></span><b>' + esc(o.t) + (cur === o.k ? '<span class="cur">Current</span>' : "") + '</b><span class="d">' + esc(o.s) + "</span><em>" + esc(o.e) + "</em></button>").join("");
     const w = $("wire");
     if (pay === "wire") { w.classList.remove("hidden"); w.textContent = j.wire_instructions ? "Wire to: " + j.wire_instructions : "Wire instructions are printed on each invoice."; }
     else w.classList.add("hidden");
-    $("choices").querySelectorAll(".payopt").forEach((b) => b.addEventListener("click", () => { if (b.dataset.pay !== cur) choose(b.dataset.pay); }));
+    $("choices").querySelectorAll(".payrow").forEach((b) => b.addEventListener("click", () => { if (b.dataset.pay !== cur) choose(b.dataset.pay); }));
   }
   async function choose(kind) {
     try {

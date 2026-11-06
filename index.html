@@ -101,20 +101,31 @@
   .method .icon { width: 40px; height: 28px; border-radius: 6px; background: var(--tint); color: var(--blue); display: grid; place-items: center; flex: none; }
   .method b { display: block; font-size: .98rem; }
   .method span { color: var(--muted); font-size: .84rem; }
-  .payopts { display: grid; gap: 8px; margin-top: 14px; }
-  .payopt { display: grid; grid-template-columns: 18px 1fr auto; gap: 4px 12px; align-items: center; text-align: left; width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); cursor: pointer; }
-  .payopt:hover { border-color: var(--field); }
-  .payopt.on { border-color: var(--blue); background: var(--tint); }
-  .payopt .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--field); grid-row: 1 / span 2; }
-  .payopt.on .dot { border-color: var(--blue); background: radial-gradient(circle, var(--blue) 45%, transparent 50%); }
-  .payopt b { font-size: .93rem; }
-  .payopt .d { grid-column: 2; color: var(--muted); font-size: .8rem; }
-  .payopt em { grid-column: 3; grid-row: 1 / span 2; font-style: normal; font-weight: 700; font-size: .9rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .payopt .tag { margin-left: 6px; }
-  .usage-big { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
-  .cases { margin-top: 12px; display: grid; gap: 6px; font-size: .88rem; }
-  .cases div { display: flex; justify-content: space-between; gap: 12px; }
-  .cases span { color: var(--muted); } .cases b { font-variant-numeric: tabular-nums; font-weight: 600; }
+  /* the ways to pay: a plain list, hairlines between rows */
+  .paylist { margin-top: 14px; border-top: 1px solid var(--line); }
+  .payrow { display: grid; grid-template-columns: 16px 1fr auto; gap: 2px 12px; align-items: center; width: 100%; padding: 11px 2px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); text-align: left; cursor: pointer; font: inherit; }
+  .payrow:hover { background: var(--bg); }
+  .payrow .radio { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--field); grid-row: 1 / span 2; box-sizing: border-box; }
+  .payrow.on .radio { border: 4.5px solid var(--blue); }
+  .payrow b { font-weight: 600; font-size: .92rem; }
+  .payrow .d { grid-column: 2; color: var(--muted); font-size: .8rem; }
+  .payrow em { grid-column: 3; grid-row: 1 / span 2; font-style: normal; font-weight: 500; font-size: .9rem; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
+  .payrow .cur { color: var(--muted); font-weight: 500; font-size: .78rem; margin-left: 8px; }
+  /* the usage chart */
+  .chart { margin-top: 16px; }
+  .chart svg { display: block; width: 100%; height: 150px; }
+  .chart .axis { display: flex; justify-content: space-between; color: var(--muted); font-size: .76rem; margin-top: 6px; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 18px; }
+  .split h3 { margin: 0 0 8px; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .list { font-size: .9rem; }
+  .list div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); }
+  .list div:first-child { border-top: 0; }
+  .list span { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .list b { font-variant-numeric: tabular-nums; font-weight: 600; flex: none; }
+  .list .pct { color: var(--muted); font-weight: 500; margin-left: 8px; }
+  .bottom { margin-top: 20px; }
+  .method .link { font-size: .86rem; }
+  .usage-big { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
   .help a { color: var(--blue); text-decoration: none; font-weight: 600; } .help a:hover { text-decoration: underline; }
   .warn-text { color: var(--bad); }
   /* the owner's form */
@@ -129,7 +140,7 @@
   .acct-list th.num, .acct-list td.num { padding-right: 18px; }
   .acct-list tr[data-ref] { cursor: pointer; } .acct-list tr[data-ref]:hover td { background: var(--tint); }
   #main-owner { display: grid; gap: 20px; }
-  @media (max-width: 900px) { .stats { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) { .stats { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } .split { grid-template-columns: 1fr; } }
   @media (max-width: 600px) { .hide-sm { display: none; } .fields { grid-template-columns: 1fr; } .stats { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -172,43 +183,47 @@
       </div>
       <div id="flash" class="banner hidden" role="status"></div>
       <div class="stats">
-        <div class="stat"><span class="k">Next payment</span><div class="v" id="st-next"></div><div class="s" id="st-next-s"></div></div>
-        <div class="stat"><span class="k">Plan</span><div class="v" id="st-plan"></div><div class="s" id="st-plan-s"></div></div>
-        <div class="stat"><span class="k">Payment method</span><div class="v" id="st-method"></div><div class="s" id="st-method-s"></div></div>
+        <div class="stat"><span class="k" id="st-usage-k">Usage</span><div class="v" id="st-usage"></div><div class="s" id="st-usage-s"></div></div>
         <div class="stat"><span class="k">Tokens left</span><div class="v" id="st-tokens"></div><div class="s" id="st-tokens-s"></div></div>
+        <div class="stat"><span class="k">Seats</span><div class="v" id="st-seats"></div><div class="s" id="st-seats-s"></div></div>
+        <div class="stat"><span class="k">Next payment</span><div class="v" id="st-next"></div><div class="s" id="st-next-s"></div></div>
       </div>
       <div class="grid">
+        <div class="col">
+          <section class="card">
+            <div class="head"><h2 id="usage-title">Usage</h2><span class="sub" id="usage-period"></span></div>
+            <div class="usage-big" id="month-total"></div>
+            <div class="sub" id="month-note"></div>
+            <div class="chart" id="chart"></div>
+            <div class="split">
+              <div><h3>By case</h3><div class="list" id="cases"></div></div>
+              <div><h3>By person</h3><div class="list" id="people"></div></div>
+            </div>
+            <div class="note warn-text" id="tokens-warn"></div>
+          </section>
+        </div>
         <div class="col">
           <section class="card">
             <div class="head"><h2>Subscription</h2><span class="tag" id="sub-status"></span></div>
             <div id="plan"></div>
           </section>
           <section class="card">
-            <div class="head"><h2>Invoices</h2></div>
-            <div id="invoices" class="empty"></div>
-          </section>
-        </div>
-        <div class="col">
-          <section class="card">
-            <div class="head"><h2>Payment method</h2><button class="btn quiet sm" id="add"></button></div>
+            <div class="head"><h2>Billing</h2><button type="button" class="link" id="add"></button></div>
             <div class="method" id="method-box"><div class="icon" id="method-icon"></div><div><b id="method"></b><span id="method-note"></span></div></div>
-            <div class="payopts" id="choices"></div>
+            <div class="paylist" id="choices"></div>
             <div id="wire" class="note hidden"></div>
-            <div class="note">Card and bank details are entered on a secure page run by Stripe. Opus Juris never sees or stores them.</div>
-          </section>
-          <section class="card">
-            <div class="head"><h2 id="usage-title">Usage</h2></div>
-            <div class="usage-big" id="month-total"></div>
-            <div class="sub" id="month-note"></div>
-            <div class="cases" id="cases"></div>
-            <div class="note warn-text" id="tokens-warn"></div>
+            <div class="note" id="pay-note"></div>
           </section>
           <section class="card help">
-            <div class="head"><h2>Need a hand?</h2></div>
-            <div class="sub">Questions about your plan or an invoice: <a href="mailto:support@opusjuris.com">support@opusjuris.com</a>.</div>
+            <div class="head"><h2>Questions</h2></div>
+            <div class="sub">About your plan or an invoice: <a href="mailto:support@opusjuris.com">support@opusjuris.com</a>.</div>
           </section>
         </div>
       </div>
+      <section class="card bottom">
+        <div class="head"><h2>Invoices</h2></div>
+        <div id="invoices" class="empty"></div>
+      </section>
     </main>
     <main id="main-owner" class="hidden">
       <div id="owner-flash" class="banner hidden" role="status"></div>
@@ -238,6 +253,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="app.js?v=13"></script>
+  <script src="app.js?v=14"></script>
 </body>
 </html>
