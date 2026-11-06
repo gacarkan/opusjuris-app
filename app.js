@@ -140,7 +140,7 @@
   function skeleton() {
     const sk = (w) => '<span class="skel" style="width:' + w + '"></span>';
     const lines = (n) => Array.from({ length: n }, () => '<span class="skel line"></span>').join("");
-    $("firm").innerHTML = sk("220px"); $("refline").innerHTML = sk("120px");
+    $("firm").innerHTML = sk("220px");
     $("status").textContent = ""; $("sub-status").textContent = "";
     for (const id of ["st-next", "st-plan", "st-method", "st-tokens"]) { $(id).innerHTML = sk("72%"); $(id + "-s").innerHTML = sk("55%"); }
     $("plan").className = ""; $("plan").innerHTML = lines(4);
@@ -180,7 +180,7 @@
     const pay = (p && p.pay_by) || "auto";
     $("me").textContent = a.admin_email;
     $("firm").textContent = a.firm_name;
-    $("refline").textContent = "Firm code " + a.ref_no;
+
     $("owner-btn").classList.toggle("hidden", !j.is_owner);
     // the account's standing, in one word
     const st = $("status");
