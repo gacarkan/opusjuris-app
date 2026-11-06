@@ -181,7 +181,11 @@
     $("me").textContent = a.admin_email;
     $("firm").textContent = a.firm_name;
 
-    $("owner-btn").classList.toggle("hidden", !j.is_owner);
+    // the staff screen is reached by address (#accounts), not from the header;
+    // the button shows only while it is open, to come back
+    const wantOwner = j.is_owner && location.hash === "#accounts";
+    $("owner-btn").classList.toggle("hidden", !wantOwner);
+    if (wantOwner && $("main-owner").classList.contains("hidden")) showOwner();
     // the account's standing, in one word
     const st = $("status");
     const standing = !p ? ["No plan", ""] : sub && sub.status === "past_due" ? ["Past due", "past_due"] : sub && sub.status === "unpaid" ? ["Unpaid", "unpaid"] : ["Active", "active"];
@@ -292,9 +296,10 @@
   });
 
   // ── the owner's screen: every account and its terms ──
-  function showFirm() { $("main-owner").classList.add("hidden"); $("main-firm").classList.remove("hidden"); $("owner-btn").textContent = "Accounts"; }
-  function showOwner() { $("main-firm").classList.add("hidden"); $("main-owner").classList.remove("hidden"); $("owner-btn").textContent = "My account"; loadAccounts(); }
-  $("owner-btn").addEventListener("click", () => { if ($("main-owner").classList.contains("hidden")) showOwner(); else showFirm(); });
+  function showFirm() { $("main-owner").classList.add("hidden"); $("main-firm").classList.remove("hidden"); $("owner-btn").classList.add("hidden"); if (location.hash === "#accounts") history.replaceState(null, "", location.pathname); }
+  function showOwner() { $("main-firm").classList.add("hidden"); $("main-owner").classList.remove("hidden"); $("owner-btn").textContent = "My account"; $("owner-btn").classList.remove("hidden"); loadAccounts(); }
+  $("owner-btn").addEventListener("click", () => showFirm());
+  window.addEventListener("hashchange", () => { if (current && current.is_owner && location.hash === "#accounts") showOwner(); });
   function oflash(kind, text) { const f = $("owner-flash"); f.className = "banner " + (text ? kind : "hidden"); f.textContent = text || ""; }
   async function loadAccounts() {
     oflash("", "");
