@@ -310,25 +310,32 @@
     days.forEach((d, n) => {
       const x = L + n * slot + (slot - bw) / 2, hgt = d.v > 0 ? Math.max(2, (d.v / top) * ih) : 0;
       if (hgt) bars += '<rect class="cbar" data-i="' + n + '" x="' + x.toFixed(1) + '" y="' + (T + ih - hgt).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hgt.toFixed(1) + '" rx="3"/>';
-      bars += '<rect class="hit" data-i="' + n + '" x="' + (L + n * slot).toFixed(1) + '" y="' + T + '" width="' + slot.toFixed(1) + '" height="' + ih + '"/>';
     });
     const every = days.length > 60 ? 15 : days.length > 14 ? 5 : 1;
     let xl = "";
     days.forEach((d, n) => { if (n % every === 0 || n === days.length - 1) xl += '<text class="xlab" x="' + (L + n * slot + slot / 2).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(new Date(d.key + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })) + "</text>"; });
     el.innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" width="' + W + '" height="' + H + '" aria-label="Usage by day">' + g + bars + xl + "</svg>" + (max > 0 ? "" : '<div class="empty" style="position:absolute;inset:0;display:grid;place-items:center">No usage in the last ' + st.range + " days.</div>");
     const svg = el.querySelector("svg");
-    let tip = null;
-    svg.querySelectorAll(".hit").forEach((r) => {
-      r.addEventListener("mouseenter", () => {
-        const n = Number(r.dataset.i), d = days[n];
-
-        if (!tip) { tip = document.createElement("div"); tip.className = "tip"; el.appendChild(tip); }
-        tip.innerHTML = "<b>" + esc(usd(d.v)) + "</b>" + esc(dateText(d.key));
-        tip.style.left = (L + n * slot + slot / 2) * (el.clientWidth / W) + "px";
-        tip.style.top = (d.v > 0 ? y(d.v) : T + ih) * (el.clientWidth / W) * (H / H) + "px";
-      });
-      r.addEventListener("mouseleave", () => { if (tip) { tip.remove(); tip = null; } });
+    const tip = document.createElement("div"); tip.className = "tip"; tip.style.opacity = "0"; el.appendChild(tip);
+    const band = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    band.setAttribute("class", "band"); band.setAttribute("y", T); band.setAttribute("height", ih); band.setAttribute("width", slot.toFixed(1)); band.setAttribute("x", L); band.style.opacity = "0";
+    svg.insertBefore(band, svg.firstChild);
+    let cur = -1;
+    const place = (n) => {
+      const d = days[n];
+      tip.innerHTML = "<b>" + esc(usd(d.v)) + "</b>" + esc(dateText(d.key));
+      tip.style.left = (L + n * slot + slot / 2) + "px";
+      tip.style.top = (d.v > 0 ? y(d.v) : T + ih) + "px";
+      tip.style.opacity = "1";
+      band.setAttribute("x", (L + n * slot).toFixed(1)); band.style.opacity = "1";
+    };
+    svg.addEventListener("mousemove", (e) => {
+      const r = svg.getBoundingClientRect();
+      const n = Math.max(0, Math.min(days.length - 1, Math.floor((e.clientX - r.left - L) / slot)));
+      if (e.clientX - r.left < L) { return; }
+      if (n !== cur) { cur = n; place(n); }
     });
+    svg.addEventListener("mouseleave", () => { cur = -1; tip.style.opacity = "0"; band.style.opacity = "0"; });
   }
   window.addEventListener("resize", () => { if (current && chartState.view === "chart") drawChart(); });
   // One description of the way the firm pays, used by the tile and the card.
