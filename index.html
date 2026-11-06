@@ -127,7 +127,8 @@
   .chart .cbar { fill: var(--blue); }
   .chart .cbar.dim { fill: #93c5fd; }
   .chart .hit { fill: transparent; }
-  .chart .tip { position: absolute; pointer-events: none; background: var(--ink); color: #fff; border-radius: 8px; padding: 8px 11px; font-size: .8rem; line-height: 1.35; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18); z-index: 3; }
+  .chart .band { fill: var(--blue); fill-opacity: 0.06; opacity: 0; transition: x .12s ease-out, opacity .15s ease; }
+  .chart .tip { position: absolute; pointer-events: none; transition: left .12s ease-out, top .12s ease-out, opacity .15s ease; background: var(--ink); color: #fff; border-radius: 8px; padding: 8px 11px; font-size: .8rem; line-height: 1.35; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18); z-index: 3; }
   .chart .tip b { display: block; font-size: .92rem; font-variant-numeric: tabular-nums; }
   .chart .tip:after { content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: var(--ink); }
   .chart table td.num { padding-right: 0; }
@@ -274,6 +275,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="app.js?v=22"></script>
+  <script src="app.js?v=24"></script>
 </body>
 </html>
