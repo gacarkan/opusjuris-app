@@ -47,40 +47,70 @@
   .foot a { color: inherit; text-decoration: none; }
   .foot a:hover { text-decoration: underline; }
 
-  /* the account */
-  header { background: var(--card); border-bottom: 1px solid var(--line); }
-  header .in { max-width: 920px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  header b { flex: 1; font-size: 1.05rem; }
+  /* the account: a dashboard */
+  header { background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  header .in { max-width: 1120px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 14px; }
+  header .mark { display: flex; align-items: center; gap: 10px; font-weight: 700; flex: 1; min-width: 0; }
+  header .mark img { height: 26px; width: auto; display: block; }
+  header .mark span { color: var(--muted); font-weight: 500; font-size: .9rem; }
   header .who { color: var(--muted); font-size: .85rem; }
-  main { max-width: 920px; margin: 0 auto; padding: 24px 16px 64px; display: grid; gap: 20px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
-  .card h2 { margin: 0 0 14px; font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--blue); }
-  .firm { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
-  .sub { color: var(--muted); font-size: .9rem; }
-  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; }
-  .method { font-size: 1.1rem; font-weight: 600; }
-  .note { color: var(--muted); font-size: .85rem; margin-top: 10px; }
-  .banner { padding: 12px 14px; border-radius: 8px; font-size: .92rem; }
+  .btn.sm { padding: 8px 14px; font-size: .88rem; }
+  main { max-width: 1120px; margin: 0 auto; padding: 28px 20px 72px; }
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .page-head h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.02em; }
+  .page-head .sub { margin-top: 4px; }
+  .banner { padding: 12px 14px; border-radius: 8px; font-size: .92rem; margin-bottom: 16px; }
   .banner.ok { background: var(--ok-bg); color: var(--ok); } .banner.warn { background: var(--warn-bg); color: var(--warn); } .banner.bad { background: var(--bad-bg); color: var(--bad); }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; min-width: 0; }
+  .stat .k { display: block; font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .stat .v { font-size: 1.45rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat .s { color: var(--muted); font-size: .82rem; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .col { display: grid; gap: 20px; min-width: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; min-width: 0; }
+  .card .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .card h2 { margin: 0; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .card .head .btn { margin: 0; }
+  .sub { color: var(--muted); font-size: .9rem; }
+  .note { color: var(--muted); font-size: .85rem; margin-top: 10px; }
+  .kv { display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; font-size: .93rem; }
+  .kv .k { color: var(--muted); }
+  .kv .v { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .kv + .kv { margin-top: 0; }
+  .bar { height: 6px; background: var(--line); border-radius: 3px; margin: 14px 0 6px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--blue); border-radius: 3px; }
+  .next { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 10px; background: var(--tint); margin-top: 14px; }
+  .next b { font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+  .next span { color: var(--muted); font-size: .88rem; }
   table { width: 100%; border-collapse: collapse; font-size: .92rem; }
-  th { text-align: left; color: var(--muted); font-weight: 600; font-size: .78rem; padding: 0 10px 8px 0; }
-  td { padding: 10px 10px 10px 0; border-top: 1px solid var(--line); vertical-align: middle; }
-  td.num, th.num { text-align: right; padding-right: 0; }
-  .tag { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; background: var(--line); color: var(--muted); }
-  .tag.paid, .tag.active { background: var(--ok-bg); color: var(--ok); } .tag.open, .tag.past_due, .tag.unpaid { background: var(--warn-bg); color: var(--warn); } .tag.uncollectible, .tag.canceled { background: var(--bad-bg); color: var(--bad); }
-  .empty { color: var(--muted); }
-  .big { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
-  .facts { display: flex; gap: 28px; } .facts .k { display: block; font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); } .facts b { font-size: 1rem; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; padding: 0 10px 8px 0; }
+  td { padding: 11px 10px 11px 0; border-top: 1px solid var(--line); vertical-align: middle; }
+  td.num, th.num { text-align: right; padding-right: 0; font-variant-numeric: tabular-nums; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; background: var(--line); color: var(--muted); vertical-align: middle; }
+  .tag.paid, .tag.active, .tag.on { background: var(--ok-bg); color: var(--ok); } .tag.open, .tag.past_due, .tag.unpaid, .tag.trialing { background: var(--warn-bg); color: var(--warn); } .tag.uncollectible, .tag.canceled { background: var(--bad-bg); color: var(--bad); }
+  .empty { color: var(--muted); font-size: .92rem; }
+  .tag:empty { display: none; }
+  .method { display: flex; align-items: center; gap: 12px; }
+  .method .icon { width: 40px; height: 28px; border-radius: 6px; background: var(--tint); color: var(--blue); display: grid; place-items: center; flex: none; }
+  .method b { display: block; font-size: .98rem; }
+  .method span { color: var(--muted); font-size: .84rem; }
+  .payopts { display: grid; gap: 8px; margin-top: 14px; }
+  .payopt { display: grid; grid-template-columns: 18px 1fr auto; gap: 4px 12px; align-items: center; text-align: left; width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); cursor: pointer; }
+  .payopt:hover { border-color: var(--field); }
+  .payopt.on { border-color: var(--blue); background: var(--tint); }
+  .payopt .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--field); grid-row: 1 / span 2; }
+  .payopt.on .dot { border-color: var(--blue); background: radial-gradient(circle, var(--blue) 45%, transparent 50%); }
+  .payopt b { font-size: .93rem; }
+  .payopt .d { grid-column: 2; color: var(--muted); font-size: .8rem; }
+  .payopt em { grid-column: 3; grid-row: 1 / span 2; font-style: normal; font-weight: 700; font-size: .9rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .payopt .tag { margin-left: 6px; }
+  .usage-big { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .cases { margin-top: 12px; display: grid; gap: 6px; font-size: .88rem; }
+  .cases div { display: flex; justify-content: space-between; gap: 12px; }
+  .cases span { color: var(--muted); } .cases b { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .help a { color: var(--blue); text-decoration: none; font-weight: 600; } .help a:hover { text-decoration: underline; }
   .warn-text { color: var(--bad); }
-  /* the three ways to pay */
-  .choices { display: grid; gap: 10px; }
-  .choice { display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; align-items: center; text-align: left; width: 100%; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); cursor: pointer; }
-  .choice:hover { border-color: var(--field); }
-  .choice.on { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15); }
-  .choice b { font-size: 1rem; }
-  .choice span { grid-column: 1; color: var(--muted); font-size: .86rem; }
-  .choice em { grid-column: 2; grid-row: 1 / span 2; font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .choice .tag { margin-left: 8px; vertical-align: middle; }
   /* the owner's form */
   .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
   .fields label { display: block; font-size: .8rem; font-weight: 600; }
@@ -88,10 +118,13 @@
   .fields .wide { grid-column: 1 / -1; }
   .fields .check { display: flex; align-items: center; gap: 8px; align-self: end; }
   .fields .check input { width: auto; margin: 0; }
+  .fields .row { display: flex; gap: 10px; }
   .acct-list td.act { text-align: right; }
   .acct-list th.num, .acct-list td.num { padding-right: 18px; }
-  .acct-list tr { cursor: pointer; } .acct-list tr:hover td { background: var(--tint); }
-  @media (max-width: 600px) { .hide-sm { display: none; } .fields { grid-template-columns: 1fr; } }
+  .acct-list tr[data-ref] { cursor: pointer; } .acct-list tr[data-ref]:hover td { background: var(--tint); }
+  #main-owner { display: grid; gap: 20px; }
+  @media (max-width: 900px) { .stats { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } }
+  @media (max-width: 600px) { .hide-sm { display: none; } .fields { grid-template-columns: 1fr; } .stats { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -120,55 +153,65 @@
   </section>
 
   <div id="app" class="hidden">
-    <header><div class="in"><b>Opus Juris Accounts</b><span class="who" id="me"></span><button class="btn quiet hidden" id="owner-btn">Accounts</button><button class="btn quiet" id="signout">Sign out</button></div></header>
+    <header><div class="in">
+      <div class="mark"><img src="assets/logo.png" alt="Opus Juris"><span>Accounts</span></div>
+      <span class="who hide-sm" id="me"></span>
+      <button class="btn quiet sm hidden" id="owner-btn">Accounts</button>
+      <button class="btn quiet sm" id="signout">Sign out</button>
+    </div></header>
     <main id="main-firm">
+      <div class="page-head">
+        <div><h1 id="firm"></h1><div class="sub" id="refline"></div></div>
+        <span class="tag" id="status"></span>
+      </div>
       <div id="flash" class="banner hidden" role="status"></div>
-      <section class="card">
-        <div class="firm" id="firm"></div>
-        <div class="sub" id="refline"></div>
-      </section>
-      <section class="card">
-        <h2>Plan</h2>
-        <div id="plan" class="empty"></div>
-      </section>
-      <section class="card">
-        <h2>How you pay</h2>
-        <div class="choices" id="choices"></div>
-        <div id="wire" class="note hidden"></div>
-      </section>
-      <section class="card">
-        <h2>Usage</h2>
-        <div class="row">
-          <div><div class="big" id="tokens-left"></div><div class="note" id="tokens-note"></div><div class="note warn-text" id="tokens-warn"></div></div>
-          <div class="facts"><div><span class="k">Seats</span><b id="seats"></b></div><div><span class="k">License</span><b id="lic-plan"></b></div></div>
+      <div class="stats">
+        <div class="stat"><span class="k">Next payment</span><div class="v" id="st-next"></div><div class="s" id="st-next-s"></div></div>
+        <div class="stat"><span class="k">Plan</span><div class="v" id="st-plan"></div><div class="s" id="st-plan-s"></div></div>
+        <div class="stat"><span class="k">Payment method</span><div class="v" id="st-method"></div><div class="s" id="st-method-s"></div></div>
+        <div class="stat"><span class="k">Tokens left</span><div class="v" id="st-tokens"></div><div class="s" id="st-tokens-s"></div></div>
+      </div>
+      <div class="grid">
+        <div class="col">
+          <section class="card">
+            <div class="head"><h2>Subscription</h2><span class="tag" id="sub-status"></span></div>
+            <div id="plan"></div>
+          </section>
+          <section class="card">
+            <div class="head"><h2>Invoices</h2></div>
+            <div id="invoices" class="empty"></div>
+          </section>
         </div>
-        <div class="note">Tokens are drawn down as the firm uses drafting, analysis and chat. They do not reset; more can be added to the account at any time.</div>
-      </section>
-      <section class="card">
-        <h2>Payment method</h2>
-        <div class="row">
-          <div><div class="method" id="method"></div><div class="note" id="method-note"></div></div>
-          <button class="btn" id="add"></button>
+        <div class="col">
+          <section class="card">
+            <div class="head"><h2>Payment method</h2><button class="btn quiet sm" id="add"></button></div>
+            <div class="method" id="method-box"><div class="icon" id="method-icon"></div><div><b id="method"></b><span id="method-note"></span></div></div>
+            <div class="payopts" id="choices"></div>
+            <div id="wire" class="note hidden"></div>
+            <div class="note">Card and bank details are entered on a secure page run by Stripe. Opus Juris never sees or stores them.</div>
+          </section>
+          <section class="card">
+            <div class="head"><h2>Usage this month</h2></div>
+            <div class="usage-big" id="month-total"></div>
+            <div class="sub" id="month-note"></div>
+            <div class="cases" id="cases"></div>
+            <div class="note warn-text" id="tokens-warn"></div>
+          </section>
+          <section class="card help">
+            <div class="head"><h2>Need a hand?</h2></div>
+            <div class="sub">Questions about your plan or an invoice: <a href="mailto:support@opusjuris.com">support@opusjuris.com</a>.</div>
+          </section>
         </div>
-        <div class="note">Card and bank details are entered on a secure page run by Stripe. Opus Juris never sees or stores them.</div>
-      </section>
-      <section class="card">
-        <h2>Subscription</h2>
-        <div id="subs" class="empty"></div>
-      </section>
-      <section class="card">
-        <h2>Invoices</h2>
-        <div id="invoices" class="empty"></div>
-      </section>
+      </div>
     </main>
     <main id="main-owner" class="hidden">
       <div id="owner-flash" class="banner hidden" role="status"></div>
       <section class="card">
-        <div class="row"><h2 style="margin:0">Accounts</h2><button class="btn quiet" id="owner-new">New account</button></div>
-        <div id="owner-list" class="empty" style="margin-top:14px">Loading</div>
+        <div class="head"><h2>Accounts</h2><button class="btn quiet sm" id="owner-new">New account</button></div>
+        <div id="owner-list" class="empty">Loading</div>
       </section>
       <section class="card hidden" id="owner-edit">
-        <h2 id="owner-edit-title">Account</h2>
+        <div class="head"><h2 id="owner-edit-title">Account</h2></div>
         <form id="owner-form" class="fields">
           <label>Firm code<input name="ref_no" autocapitalize="characters" spellcheck="false" required></label>
           <label>Firm<input name="firm_name" required></label>
@@ -189,6 +232,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
