@@ -132,14 +132,14 @@
   .chart .tip:after { content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: var(--ink); }
   .chart table td.num { padding-right: 0; }
   .chart .empty { padding: 40px 0; text-align: center; }
-  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 18px; }
-  .split h3 { margin: 0 0 8px; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
-  .list { font-size: .9rem; }
-  .list div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); }
-  .list div:first-child { border-top: 0; }
-  .list span { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .list b { font-variant-numeric: tabular-nums; font-weight: 600; flex: none; }
-  .list .pct { color: var(--muted); font-weight: 500; margin-left: 8px; }
+  .breakdown { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .bars { display: grid; gap: 12px; margin-top: 14px; }
+  .brow { display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; align-items: baseline; font-size: .9rem; }
+  .brow .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .brow .a { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .brow .t { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .brow .t i { display: block; height: 100%; background: var(--blue); border-radius: 3px; }
+  .brow .more { color: var(--muted); font-size: .84rem; }
   .bottom { margin-top: 20px; }
   .method .link { font-size: .86rem; }
   .usage-big { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
@@ -216,9 +216,9 @@
               <div class="chart-tools"><div class="seg-group" id="chart-range"></div><div class="seg-group" id="chart-view"></div></div>
             </div>
             <div class="chart" id="chart"></div>
-            <div class="split">
-              <div><h3>By case</h3><div class="list" id="cases"></div></div>
-              <div><h3>By person</h3><div class="list" id="people"></div></div>
+            <div class="breakdown">
+              <div class="chart-head" style="margin-top:0"><div><div class="chart-title">Where it went</div><div class="sub" id="bd-sub"></div></div><div class="chart-tools"><div class="seg-group" id="bd-tabs"></div></div></div>
+              <div class="bars" id="bd-list"></div>
             </div>
             <div class="note warn-text" id="tokens-warn"></div>
           </section>
@@ -274,6 +274,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="app.js?v=20"></script>
+  <script src="app.js?v=21"></script>
 </body>
 </html>

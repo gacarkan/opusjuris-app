@@ -145,7 +145,7 @@
     for (const id of ["st-usage", "st-tokens", "st-seats", "st-next"]) { $(id).innerHTML = sk("72%"); $(id + "-s").innerHTML = sk("55%"); }
     $("month-total").innerHTML = sk("140px"); $("month-note").innerHTML = sk("220px"); $("usage-period").textContent = "";
     $("chart").innerHTML = '<span class="skel row" style="height:150px"></span>';
-    $("cases").innerHTML = lines(4); $("people").innerHTML = lines(4); $("tokens-warn").textContent = "";
+    $("bd-list").innerHTML = lines(4); $("bd-tabs").innerHTML = ""; $("bd-sub").textContent = ""; $("tokens-warn").textContent = "";
     $("plan").className = ""; $("plan").innerHTML = lines(4);
     $("method-icon").innerHTML = ""; $("method").innerHTML = sk("160px"); $("method-note").innerHTML = sk("120px");
     $("add").textContent = ""; $("choices").innerHTML = lines(3); $("pay-note").textContent = "";
@@ -207,12 +207,7 @@
     $("st-seats").textContent = s ? String(s.used) : "n/a";
     $("st-seats-s").textContent = s && s.seats ? "of " + s.seats + " included" : "in use";
     renderChart(u.series || []);
-    const base = total || 0;
-    const pct = (v) => (base > 0 ? '<span class="pct">' + Math.round(Number(v) / base * 100) + "%</span>" : "");
-    const cases = (mo && mo.by_case) || [];
-    $("cases").innerHTML = cases.length ? cases.slice(0, 6).map((c) => "<div><span>" + esc(c.case_ref === "other" ? "Other work" : "Case " + c.case_ref) + "</span><b>" + esc(usd(c.usd)) + pct(c.usd) + "</b></div>").join("") : '<div><span class="empty">Nothing yet</span></div>';
-    const people = (mo && mo.by_user) || [];
-    $("people").innerHTML = people.length ? people.slice(0, 6).map((x) => "<div><span>" + esc(x.name || x.email) + "</span><b>" + esc(usd(x.usd)) + pct(x.usd) + "</b></div>").join("") : '<div><span class="empty">Nothing yet</span></div>';
+    renderBreakdown(mo, periodText);
     $("tokens-warn").textContent = onTokens && Number(tk.left) <= 0 ? "No tokens left: drafting, analysis and chat are paused until more tokens are added." : "";
     // next payment
     const price = p ? (p.discounted ? p.bank_monthly_usd : p.monthly_usd) : null;
@@ -241,6 +236,28 @@
       const act = i.status === "open" && i.hosted_invoice_url ? '<a class="btn sm" href="' + esc(i.hosted_invoice_url) + '" target="_blank" rel="noopener">Pay</a>' : (i.invoice_pdf ? '<a class="link" href="' + esc(i.invoice_pdf) + '" target="_blank" rel="noopener">PDF</a>' : "");
       return "<tr><td>" + esc(i.number || "Invoice") + '</td><td class="hide-sm">' + esc(day(i.created)) + '</td><td><span class="tag ' + esc(i.status) + '">' + esc(label(i.status)) + '</span></td><td class="num">' + esc(money(amt, i.currency)) + '</td><td class="num">' + act + "</td></tr>";
     }).join("") + "</tbody></table>" : (p ? "Your first invoice appears here on " + dateText(p.starts_on) + "." : "No invoices yet.");
+  }
+  // Where the usage went: one list at a time, cases or people, each row a
+  // name, a bar for its share and the amount.
+  const bdState = { tab: "case" };
+  function renderBreakdown(mo, periodText) {
+    bdState.mo = mo; bdState.period = periodText;
+    drawBreakdown();
+  }
+  function drawBreakdown() {
+    const mo = bdState.mo || {};
+    const who = (x) => { if (x.name && x.name !== x.email) return x.name; const local = String(x.email || "").split("@")[0]; return local ? local.charAt(0).toUpperCase() + local.slice(1) : "Unknown"; };
+    const rows = bdState.tab === "case"
+      ? ((mo.by_case) || []).map((c) => ({ n: c.case_ref === "other" ? "Other work" : "Case " + c.case_ref, v: Number(c.usd) || 0 }))
+      : ((mo.by_user) || []).map((x) => ({ n: who(x), v: Number(x.usd) || 0 }));
+    const sum = rows.reduce((s, r) => s + r.v, 0), max = Math.max(...rows.map((r) => r.v), 0);
+    const top = rows.slice(0, 6), rest = rows.slice(6);
+    $("bd-tabs").innerHTML = [["case", "Cases"], ["user", "People"]].map((t) => '<button type="button" class="seg' + (bdState.tab === t[0] ? " on" : "") + '" data-tab="' + t[0] + '">' + t[1] + "</button>").join("");
+    $("bd-tabs").querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => { bdState.tab = b.dataset.tab; drawBreakdown(); }));
+    $("bd-sub").textContent = rows.length ? (bdState.tab === "case" ? "By case, " : "By person, ") + bdState.period + "." : "";
+    $("bd-list").innerHTML = top.length ? top.map((r) => '<div class="brow"><span class="n">' + esc(r.n) + '</span><span class="a">' + esc(usd(r.v)) + '</span><span class="t"><i style="width:' + (max > 0 ? Math.max(1, Math.round(r.v / max * 100)) : 0) + '%"></i></span></div>').join("")
+      + (rest.length ? '<div class="brow"><span class="n more">' + rest.length + (bdState.tab === "case" ? " more cases" : " more people") + '</span><span class="a more">' + esc(usd(rest.reduce((s, r) => s + r.v, 0))) + "</span></div>" : "")
+      : '<div class="empty">Nothing yet.</div>';
   }
   // The usage chart: one colour, dollar gridlines, date ticks, rounded bars,
   // a tooltip that follows the pointer, and a table as the other view.
