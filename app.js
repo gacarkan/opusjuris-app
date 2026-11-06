@@ -206,7 +206,7 @@
     $("st-tokens-s").textContent = onTokens ? "of " + tokens(tk.granted) + " granted" : "Not on tokens";
     $("st-seats").textContent = s ? String(s.used) : "n/a";
     $("st-seats-s").textContent = s && s.seats ? "of " + s.seats + " included" : "in use";
-    renderChart((mo && mo.by_day) || []);
+    renderChart(u.series || []);
     const base = total || 0;
     const pct = (v) => (base > 0 ? '<span class="pct">' + Math.round(Number(v) / base * 100) + "%</span>" : "");
     const cases = (mo && mo.by_case) || [];
@@ -242,18 +242,68 @@
       return "<tr><td>" + esc(i.number || "Invoice") + '</td><td class="hide-sm">' + esc(day(i.created)) + '</td><td><span class="tag ' + esc(i.status) + '">' + esc(label(i.status)) + '</span></td><td class="num">' + esc(money(amt, i.currency)) + '</td><td class="num">' + act + "</td></tr>";
     }).join("") + "</tbody></table>" : (p ? "Your first invoice appears here on " + dateText(p.starts_on) + "." : "No invoices yet.");
   }
-  // Daily usage over the last 30 days as plain bars.
-  function renderChart(days) {
+  // The usage chart: the series (one row per day, model, person, case and
+  // feature) grouped the way the viewer picks, over the range they pick,
+  // as stacked bars with a readout on hover and a legend that toggles.
+  const PALETTE = ["#2563eb", "#0ea5e9", "#14b8a6", "#8b5cf6", "#f59e0b", "#ef4444", "#64748b", "#a3e635"];
+  const chartState = { range: 30, group: "total", hidden: {}, series: [] };
+  const GROUP_KEY = { total: () => "Total", model: (r) => r.model || "other", user: (r) => r.user || "unknown", case_ref: (r) => (r.case_ref === "other" ? "Other work" : "Case " + r.case_ref), feature: (r) => r.feature || "other" };
+  function renderChart(series) {
+    chartState.series = series || [];
+    drawChart();
+  }
+  function drawChart() {
     const el = $("chart");
-    const byDay = {};
-    days.forEach((d) => { byDay[String(d.day).slice(0, 10)] = Number(d.usd) || 0; });
-    const list = [];
-    for (let k = 29; k >= 0; k--) { const d = new Date(); d.setDate(d.getDate() - k); const key = d.toISOString().slice(0, 10); list.push({ key, v: byDay[key] || 0 }); }
-    const max = Math.max(1, ...list.map((x) => x.v));
-    const W = 600, H = 150, pad = 2, bw = W / list.length;
-    const bars = list.map((x, i) => { const h = Math.round((x.v / max) * (H - 18)); return '<rect x="' + (i * bw + pad).toFixed(1) + '" y="' + (H - h) + '" width="' + (bw - pad * 2).toFixed(1) + '" height="' + h + '" rx="2" fill="' + (x.v ? "#2563eb" : "#e2e8f0") + '"><title>' + esc(dateText(x.key)) + ": " + esc(usd(x.v)) + "</title></rect>"; }).join("");
-    el.innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" aria-label="Usage by day">' + bars + "</svg>"
-      + '<div class="axis"><span>' + esc(dateText(list[0].key)) + "</span><span>Peak " + esc(usd(max === 1 && !list.some((x) => x.v) ? 0 : max)) + " a day</span><span>" + esc(dateText(list[list.length - 1].key)) + "</span></div>";
+    const st = chartState;
+    const days = [];
+    for (let k = st.range - 1; k >= 0; k--) { const d = new Date(); d.setDate(d.getDate() - k); days.push(d.toISOString().slice(0, 10)); }
+    const keyOf = GROUP_KEY[st.group];
+    const totals = {}, byDay = {};
+    for (const r of st.series) {
+      const d = String(r.day).slice(0, 10); if (days.indexOf(d) < 0) continue;
+      const key = keyOf(r), v = Number(r.usd) || 0;
+      totals[key] = (totals[key] || 0) + v;
+      (byDay[d] = byDay[d] || {})[key] = ((byDay[d] || {})[key] || 0) + v;
+    }
+    const keys = Object.keys(totals).sort((x, y) => totals[y] - totals[x]);
+    const shown = keys.slice(0, 8);
+    const rest = keys.slice(8);
+    if (rest.length) { shown.push("Everything else"); for (const d of Object.keys(byDay)) { let s = 0; for (const k of rest) { s += byDay[d][k] || 0; delete byDay[d][k]; } if (s) byDay[d]["Everything else"] = s; } totals["Everything else"] = rest.reduce((s, k) => s + totals[k], 0); }
+    const color = {}; shown.forEach((k, n) => { color[k] = PALETTE[n % PALETTE.length]; });
+    const visible = shown.filter((k) => !st.hidden[k]);
+    const dayTotal = (d) => visible.reduce((s, k) => s + ((byDay[d] || {})[k] || 0), 0);
+    const max = Math.max(0.01, ...days.map(dayTotal));
+    const W = 720, H = 170, top = 10, bottom = 4, bw = W / days.length, gap = Math.max(1, Math.min(4, bw * 0.25));
+    let bars = "";
+    days.forEach((d, n) => {
+      let y = H - bottom;
+      for (const k of visible) {
+        const v = (byDay[d] || {})[k] || 0; if (!v) continue;
+        const h = Math.max(1, (v / max) * (H - top - bottom)); y -= h;
+        bars += '<rect data-day="' + d + '" x="' + (n * bw + gap / 2).toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (bw - gap).toFixed(1) + '" height="' + h.toFixed(1) + '" fill="' + color[k] + '"/>';
+      }
+      if (!dayTotal(d)) bars += '<rect data-day="' + d + '" x="' + (n * bw + gap / 2).toFixed(1) + '" y="' + (H - bottom - 1) + '" width="' + (bw - gap).toFixed(1) + '" height="1" fill="#e2e8f0"/>';
+      bars += '<rect class="hit" data-day="' + d + '" x="' + (n * bw).toFixed(1) + '" y="0" width="' + bw.toFixed(1) + '" height="' + H + '" fill="transparent"/>';
+    });
+    const sum = days.reduce((s, d) => s + dayTotal(d), 0);
+    const ctl = (name, opts, cur) => opts.map((o) => '<button type="button" class="seg' + (o.v === cur ? " on" : "") + '" data-' + name + '="' + o.v + '">' + o.t + "</button>").join("");
+    el.innerHTML = '<div class="chart-bar"><div class="seg-group">' + ctl("range", [{ v: 7, t: "7 days" }, { v: 30, t: "30 days" }, { v: 90, t: "90 days" }], st.range) + '</div><div class="seg-group">' + ctl("group", [{ v: "total", t: "Total" }, { v: "model", t: "Model" }, { v: "user", t: "Person" }, { v: "case_ref", t: "Case" }, { v: "feature", t: "Feature" }], st.group) + "</div></div>"
+      + '<div class="chart-read" id="chart-read"><b>' + esc(usd(sum)) + "</b><span>" + st.range + " days" + (st.group !== "total" ? ", by " + ({ model: "model", user: "person", case_ref: "case", feature: "feature" })[st.group] : "") + "</span></div>"
+      + '<svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" aria-label="Usage by day">' + bars + "</svg>"
+      + '<div class="axis"><span>' + esc(dateText(days[0])) + "</span><span>" + esc(dateText(days[days.length - 1])) + "</span></div>"
+      + (st.group !== "total" ? '<div class="legend">' + shown.map((k) => '<button type="button" class="lg' + (st.hidden[k] ? " off" : "") + '" data-key="' + esc(k) + '"><i style="background:' + color[k] + '"></i>' + esc(k) + '<span>' + esc(usd(totals[k])) + "</span></button>").join("") + "</div>" : "");
+    el.querySelectorAll("[data-range]").forEach((b) => b.addEventListener("click", () => { st.range = Number(b.dataset.range); drawChart(); }));
+    el.querySelectorAll("[data-group]").forEach((b) => b.addEventListener("click", () => { st.group = b.dataset.group; st.hidden = {}; drawChart(); }));
+    el.querySelectorAll(".lg").forEach((b) => b.addEventListener("click", () => { st.hidden[b.dataset.key] = !st.hidden[b.dataset.key]; drawChart(); }));
+    const read = $("chart-read");
+    const idle = read.innerHTML;
+    el.querySelectorAll("svg .hit").forEach((r) => {
+      r.addEventListener("mouseenter", () => {
+        const d = r.dataset.day, parts = visible.filter((k) => (byDay[d] || {})[k]).map((k) => '<em><i style="background:' + color[k] + '"></i>' + esc(k) + " " + esc(usd(byDay[d][k])) + "</em>");
+        read.innerHTML = "<b>" + esc(usd(dayTotal(d))) + "</b><span>" + esc(dateText(d)) + "</span>" + (st.group !== "total" ? '<div class="parts">' + parts.join("") + "</div>" : "");
+      });
+      r.addEventListener("mouseleave", () => { read.innerHTML = idle; });
+    });
   }
   // One description of the way the firm pays, used by the tile and the card.
   const ICON_CARD = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>';
@@ -262,8 +312,8 @@
   function methodText(m, pay) {
     if (pay === "wire") return { short: "Wire", sub: "Invoiced by email", long: "Paying by wire", note: "Each invoice arrives by email with wire instructions.", icon: ICON_WIRE };
     if (!m) return { short: "None", sub: "Add one to pay automatically", long: "No payment method on file", note: "Choose a way to pay below.", icon: ICON_CARD };
-    if (m.type === "card") return { short: label(m.brand).replace(/^./, (c) => c.toUpperCase()) + " \u2022\u2022\u2022\u2022 " + m.last4, sub: m.exp_month ? "Expires " + String(m.exp_month).padStart(2, "0") + "/" + m.exp_year : "Card", long: label(m.brand).replace(/^./, (c) => c.toUpperCase()) + " card ending " + m.last4, note: m.exp_month ? "Expires " + String(m.exp_month).padStart(2, "0") + "/" + m.exp_year + ". Charged on each invoice." : "Charged on each invoice.", icon: ICON_CARD };
-    if (m.type === "bank") return { short: "Bank \u2022\u2022\u2022\u2022 " + m.last4, sub: m.bank_name || "Bank debit", long: (m.bank_name || "Bank account") + " ending " + m.last4, note: "Bank debit (ACH), pulled on each invoice.", icon: ICON_BANK };
+    if (m.type === "card") return { short: label(m.brand).replace(/^./, (c) => c.toUpperCase()) + " •••• " + m.last4, sub: m.exp_month ? "Expires " + String(m.exp_month).padStart(2, "0") + "/" + m.exp_year : "Card", long: label(m.brand).replace(/^./, (c) => c.toUpperCase()) + " card ending " + m.last4, note: m.exp_month ? "Expires " + String(m.exp_month).padStart(2, "0") + "/" + m.exp_year + ". Charged on each invoice." : "Charged on each invoice.", icon: ICON_CARD };
+    if (m.type === "bank") return { short: "Bank •••• " + m.last4, sub: m.bank_name || "Bank debit", long: (m.bank_name || "Bank account") + " ending " + m.last4, note: "Bank debit (ACH), pulled on each invoice.", icon: ICON_BANK };
     return { short: "On file", sub: "", long: "Payment method on file", note: "", icon: ICON_CARD };
   }
   // The subscription card: the terms as agreed and what comes next.
