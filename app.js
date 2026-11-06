@@ -143,7 +143,7 @@
     $("firm").innerHTML = sk("220px");
     $("status").textContent = ""; $("sub-status").textContent = "";
     for (const id of ["st-usage", "st-tokens", "st-seats", "st-next", "st-plan", "st-method"]) { $(id).innerHTML = sk("72%"); $(id + "-s").innerHTML = sk("55%"); }
-    $("month-total").innerHTML = sk("140px"); $("month-note").innerHTML = sk("220px"); $("usage-period").textContent = "";
+    $("usage-period").textContent = "";
     const hs = [18, 30, 22, 46, 38, 26, 60, 44, 32, 52, 70, 48, 36, 58, 42, 28, 64, 50, 34, 56, 72, 40, 30, 62, 46, 38, 54, 44, 26, 48];
     $("chart").innerHTML = '<div class="skel-chart">' + hs.map((p) => '<i style="height:' + p + '%"></i>').join("") + '</div><div class="axis"><span class="skel" style="width:52px"></span><span class="skel" style="width:52px"></span></div>';
     $("chart-range").innerHTML = '<span class="skel" style="width:150px;height:30px;border-radius:8px"></span>'; $("chart-view").innerHTML = '<span class="skel" style="width:64px;height:30px;border-radius:8px"></span>';
@@ -197,14 +197,11 @@
     const localDay = (iso) => { const d = new Date(iso); return isNaN(d) ? String(iso).slice(0, 10) : new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
     const since = mo && mo.on_tokens && mo.window_start ? localDay(mo.window_start) : null;
     const periodText = since ? "since " + dateText(since) : "this month";
-    $("usage-title").textContent = "Usage";
-    $("usage-period").textContent = periodText.replace(/^./, (c) => c.toUpperCase());
+    $("usage-period").textContent = "Since " + (since ? dateText(since) : "the start of the month") + ", at your firm\u2019s prices.";
     const total = mo && mo.total_usd != null ? Number(mo.total_usd) : null;
     $("st-usage-k").textContent = "Usage " + periodText;
     $("st-usage").textContent = total != null ? usd(total) : (onTokens ? tokens(tk.used) + " tokens" : "n/a");
-    $("st-usage-s").textContent = mo && mo.days_left != null && !since ? mo.days_left + " days left" : (mo && mo.usage_rate != null && Number(mo.usage_rate) !== 1 ? "At your firm\u2019s prices" : "");
-    $("month-total").textContent = total != null ? usd(total) : "";
-    $("month-note").textContent = total != null ? (onTokens ? tokens(tk.used) + " tokens used " + periodText + (Number(mo.usage_rate) !== 1 ? ", at your firm\u2019s prices" : "") : "At your firm\u2019s prices") : "No usage recorded yet.";
+    $("st-usage-s").textContent = onTokens ? tokens(tk.used) + " tokens used" : (mo && mo.days_left != null ? mo.days_left + " days left in the month" : "");
     $("st-tokens").textContent = onTokens ? tokens(tk.left) : "n/a";
     $("st-tokens-s").textContent = onTokens ? "of " + tokens(tk.granted) : "Not on tokens";
     $("st-seats").textContent = s ? String(s.used) : "n/a";
@@ -406,12 +403,12 @@
     const billing = name === "billing";
     $("tab-usage").classList.toggle("hidden", billing);
     $("tab-billing").classList.toggle("hidden", !billing);
-    document.querySelectorAll(".tabs .tab").forEach((b) => b.classList.toggle("on", b.dataset.tab === (billing ? "billing" : "usage")));
+    document.querySelectorAll(".nav-item").forEach((b) => b.classList.toggle("on", b.dataset.tab === (billing ? "billing" : "usage")));
     const want = billing ? "#billing" : "";
     if (location.hash !== want && location.hash !== "#accounts") history.replaceState(null, "", location.pathname + want);
     if (!billing && chartState.view === "chart" && current) drawChart();
   }
-  document.querySelectorAll(".tabs .tab").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+  document.querySelectorAll(".nav-item").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
   function showFirm() { $("main-owner").classList.add("hidden"); $("main-firm").classList.remove("hidden"); $("owner-btn").classList.add("hidden"); if (location.hash === "#accounts") history.replaceState(null, "", location.pathname); }
   function showOwner() { $("main-firm").classList.add("hidden"); $("main-owner").classList.remove("hidden"); $("owner-btn").textContent = "My account"; $("owner-btn").classList.remove("hidden"); loadAccounts(); }
   $("owner-btn").addEventListener("click", () => showFirm());

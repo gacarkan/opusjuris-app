@@ -47,70 +47,61 @@
   .foot a { color: inherit; text-decoration: none; }
   .foot a:hover { text-decoration: underline; }
 
-  /* the account: a dashboard */
-  header { background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
-  header .in { max-width: 1120px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 14px; }
-  header .mark { display: flex; align-items: center; flex: 1; min-width: 0; text-decoration: none; }
-  header .mark img { height: 26px; width: auto; display: block; }
-  header .mark span { color: var(--muted); font-weight: 500; font-size: .9rem; }
-  header .who { color: var(--muted); font-size: .85rem; }
+  /* the account: a sidebar and a content column, as the consoles do it */
+  #app { display: flex; min-height: 100vh; }
+  .side { width: 232px; flex: none; background: #f7f8fa; border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 18px 14px; position: sticky; top: 0; height: 100vh; box-sizing: border-box; }
+  .side .brand { display: block; padding: 6px 8px 18px; text-decoration: none; }
+  .side .brand img { height: 26px; width: auto; display: block; }
+  .nav { display: grid; gap: 2px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: inherit; font-weight: 600; font-size: .92rem; cursor: pointer; text-align: left; }
+  .nav-item:hover { background: #eef0f4; color: var(--ink); }
+  .nav-item.on { background: #e6eaf1; color: var(--ink); }
+  .nav-item svg { flex: none; }
+  .side-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+  .side-foot .who { padding: 0 8px; min-width: 0; }
+  .side-foot .who b { display: block; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .side-foot .who span { display: block; color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .side-foot .btn { width: 100%; }
+  .content { flex: 1; min-width: 0; }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 36px 72px; }
   .btn.sm { padding: 8px 14px; font-size: .88rem; }
-  main { max-width: 1120px; margin: 0 auto; padding: 28px 20px 72px; }
-  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
-  .page-head h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.02em; }
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+  .page-head h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.02em; }
   .page-head .sub { margin-top: 4px; }
   .banner { padding: 12px 14px; border-radius: 8px; font-size: .92rem; margin-bottom: 16px; }
   .banner.ok { background: var(--ok-bg); color: var(--ok); } .banner.warn { background: var(--warn-bg); color: var(--warn); } .banner.bad { background: var(--bad-bg); color: var(--bad); }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
-  .stats.three { grid-template-columns: repeat(3, 1fr); }
-  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
-  .tab { padding: 10px 14px; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: transparent; color: var(--muted); font: inherit; font-weight: 600; cursor: pointer; }
-  .tab:hover { color: var(--ink); }
-  .tab.on { color: var(--blue); border-bottom-color: var(--blue); }
-  #tab-usage .card { margin-top: 0; }
-  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; min-width: 0; }
-  .stat .k { display: block; font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .stat .v { font-size: 1.45rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .stat .s { color: var(--muted); font-size: .82rem; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+  .stat .k { display: block; font-size: .8rem; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+  .stat .v { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat .s { color: var(--muted); font-size: .82rem; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
   .col { display: grid; gap: 20px; min-width: 0; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; min-width: 0; }
-  .card .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-  .card h2 { margin: 0; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; min-width: 0; }
+  .card + .card { margin-top: 20px; }
+  .card .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .card h2 { margin: 0; font-size: 1rem; font-weight: 700; }
+  .card .head .sub { margin-top: 2px; }
   .card .head .btn { margin: 0; }
-  .sub { color: var(--muted); font-size: .9rem; }
+  .sub { color: var(--muted); font-size: .88rem; }
   .note { color: var(--muted); font-size: .85rem; margin-top: 10px; }
   .kv { display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; font-size: .93rem; }
   .kv .k { color: var(--muted); }
   .kv .v { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
-  .kv + .kv { margin-top: 0; }
   .bar { height: 6px; background: var(--line); border-radius: 3px; margin: 14px 0 6px; overflow: hidden; }
   .bar i { display: block; height: 100%; background: var(--blue); border-radius: 3px; }
-  .next { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 10px; background: var(--tint); margin-top: 14px; }
-  .next b { font-size: 1.25rem; font-variant-numeric: tabular-nums; }
-  .next span { color: var(--muted); font-size: .88rem; }
   table { width: 100%; border-collapse: collapse; font-size: .92rem; }
-  th { text-align: left; color: var(--muted); font-weight: 600; font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; padding: 0 10px 8px 0; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: .78rem; padding: 0 10px 8px 0; }
   td { padding: 11px 10px 11px 0; border-top: 1px solid var(--line); vertical-align: middle; }
   td.num, th.num { text-align: right; padding-right: 0; font-variant-numeric: tabular-nums; }
   .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; background: var(--line); color: var(--muted); vertical-align: middle; }
   .tag.paid, .tag.active, .tag.on { background: var(--ok-bg); color: var(--ok); } .tag.open, .tag.past_due, .tag.unpaid, .tag.trialing { background: var(--warn-bg); color: var(--warn); } .tag.uncollectible, .tag.canceled { background: var(--bad-bg); color: var(--bad); }
-  .empty { color: var(--muted); font-size: .92rem; }
-  /* shimmer placeholders that hold the layout while the figures load */
-  .skel { display: inline-block; height: 1em; width: 8em; max-width: 100%; border-radius: 6px; vertical-align: middle; background: linear-gradient(90deg, var(--line) 25%, var(--bg) 40%, var(--line) 55%); background-size: 300% 100%; animation: shimmer 1.3s ease-in-out infinite; }
-  .skel.line { display: block; height: 12px; margin: 10px 0; }
-  .skel.row { display: block; height: 58px; border-radius: 10px; margin: 8px 0; }
-  .skel-chart { display: flex; align-items: flex-end; gap: 4px; height: 210px; padding-left: 44px; }
-  .skel-chart i { flex: 1; min-width: 0; border-radius: 3px 3px 0 0; background: linear-gradient(90deg, var(--line) 25%, var(--bg) 40%, var(--line) 55%); background-size: 300% 100%; animation: shimmer 1.3s ease-in-out infinite; }
-  @media (prefers-reduced-motion: reduce) { .skel-chart i { animation: none; } }
-  @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
-  @media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
   .tag:empty { display: none; }
+  .empty { color: var(--muted); font-size: .92rem; }
   .method { display: flex; align-items: center; gap: 12px; }
   .method .icon { width: 40px; height: 28px; border-radius: 6px; background: var(--tint); color: var(--blue); display: grid; place-items: center; flex: none; }
   .method b { display: block; font-size: .98rem; }
   .method span { color: var(--muted); font-size: .84rem; }
-  /* the ways to pay: a plain list, hairlines between rows */
   .paylist { margin-top: 14px; border-top: 1px solid var(--line); }
   .payrow { display: grid; grid-template-columns: 16px 1fr auto; gap: 2px 12px; align-items: center; width: 100%; padding: 11px 2px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); text-align: left; cursor: pointer; font: inherit; }
   .payrow:hover { background: var(--bg); }
@@ -121,38 +112,31 @@
   .payrow em { grid-column: 3; grid-row: 1 / span 2; font-style: normal; font-weight: 500; font-size: .9rem; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
   .payrow .cur { color: var(--muted); font-weight: 500; font-size: .78rem; margin-left: 8px; }
   /* the usage chart */
-  .chart-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
-  .chart-title { font-weight: 700; font-size: 1rem; }
   .chart-tools { display: flex; gap: 8px; }
   .seg-group { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
   .seg { padding: 5px 10px; border: 0; background: var(--card); color: var(--muted); font: inherit; font-size: .8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; }
   .seg + .seg { border-left: 1px solid var(--line); }
   .seg.on { background: var(--tint); color: var(--blue); }
   .seg svg { display: block; }
-  .chart { position: relative; margin-top: 12px; }
+  .chart { position: relative; margin-top: 8px; }
   .chart svg { display: block; width: 100%; height: 240px; overflow: visible; }
   .chart .grid { stroke: var(--line); stroke-width: 1; }
   .chart .ylab, .chart .xlab { fill: var(--muted); font-size: 11px; font-family: inherit; }
   .chart .cbar { fill: var(--blue); }
-  .chart .cbar.dim { fill: #93c5fd; }
-  .chart .hit { fill: transparent; }
   .chart .band { fill: var(--blue); fill-opacity: 0.06; opacity: 0; transition: x .12s ease-out, opacity .15s ease; }
   .chart .tip { position: absolute; pointer-events: none; transition: left .12s ease-out, top .12s ease-out, opacity .15s ease; background: var(--ink); color: #fff; border-radius: 8px; padding: 8px 11px; font-size: .8rem; line-height: 1.35; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18); z-index: 3; }
   .chart .tip b { display: block; font-size: .92rem; font-variant-numeric: tabular-nums; }
   .chart .tip:after { content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: var(--ink); }
   .chart table td.num { padding-right: 0; }
   .chart .empty { padding: 40px 0; text-align: center; }
-  .breakdown { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
-  .bars { display: grid; gap: 12px; margin-top: 14px; }
+  .chart .axis { display: flex; justify-content: space-between; color: var(--muted); font-size: .76rem; margin-top: 6px; }
+  .bars { display: grid; gap: 12px; margin-top: 4px; }
   .brow { display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; align-items: baseline; font-size: .9rem; }
   .brow .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .brow .a { font-variant-numeric: tabular-nums; font-weight: 600; }
   .brow .t { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; }
   .brow .t i { display: block; height: 100%; background: var(--blue); border-radius: 3px; }
   .brow .more { color: var(--muted); font-size: .84rem; }
-  .bottom { margin-top: 20px; }
-  .method .link { font-size: .86rem; }
-  .usage-big { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
   .help a { color: var(--blue); text-decoration: none; font-weight: 600; } .help a:hover { text-decoration: underline; }
   .warn-text { color: var(--bad); }
   /* the owner's form */
@@ -166,9 +150,19 @@
   .acct-list td.act { text-align: right; }
   .acct-list th.num, .acct-list td.num { padding-right: 18px; }
   .acct-list tr[data-ref] { cursor: pointer; } .acct-list tr[data-ref]:hover td { background: var(--tint); }
-  #main-owner { display: grid; gap: 20px; }
-  @media (max-width: 900px) { .stats, .stats.three { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } }
-  @media (max-width: 600px) { .hide-sm { display: none; } .fields { grid-template-columns: 1fr; } .stats, .stats.three { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) {
+    #app { display: block; }
+    .side { width: auto; height: auto; position: static; flex-direction: row; align-items: center; gap: 8px; padding: 10px 14px; border-right: 0; border-bottom: 1px solid var(--line); }
+    .side .brand { padding: 0 6px 0 0; }
+    .nav { display: flex; gap: 2px; flex: 1; }
+    .nav-item { width: auto; padding: 8px 10px; }
+    .side-foot { margin: 0; padding: 0; border: 0; display: flex; align-items: center; gap: 8px; }
+    .side-foot .who { display: none; }
+    .side-foot .btn { width: auto; }
+    main { padding: 20px 16px 60px; }
+    .stats { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) { .hide-sm { display: none; } .fields { grid-template-columns: 1fr; } .stats { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -197,43 +191,41 @@
   </section>
 
   <div id="app" class="hidden">
-    <header><div class="in">
-      <a class="mark" href="https://opusjuris.com" aria-label="Opus Juris"><img src="assets/logo.png" alt="Opus Juris"></a>
-      <span class="who hide-sm" id="me"></span>
-      <button class="btn quiet sm hidden" id="owner-btn">Accounts</button>
-      <button class="btn quiet sm" id="signout">Sign out</button>
-    </div></header>
-    <main id="main-firm">
-      <div class="page-head">
-        <div><h1 id="firm"></h1></div>
-        <span class="tag" id="status"></span>
+    <aside class="side">
+      <a class="brand" href="https://opusjuris.com" aria-label="Opus Juris"><img src="assets/logo.png" alt="Opus Juris"></a>
+      <nav class="nav" aria-label="Sections">
+        <button type="button" class="nav-item on" data-tab="usage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="8"/><rect x="12" y="6" width="3" height="12"/><rect x="17" y="13" width="3" height="5"/></svg>Usage</button>
+        <button type="button" class="nav-item" data-tab="billing"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Billing</button>
+      </nav>
+      <div class="side-foot">
+        <div class="who"><b id="firm"></b><span id="me"></span></div>
+        <button class="btn quiet sm hidden" id="owner-btn">Accounts</button>
+        <button class="btn quiet sm" id="signout">Sign out</button>
       </div>
-      <nav class="tabs" aria-label="Sections"><button type="button" class="tab on" data-tab="usage">Usage</button><button type="button" class="tab" data-tab="billing">Billing</button></nav>
+    </aside>
+    <div class="content">
+    <main id="main-firm">
       <div id="flash" class="banner hidden" role="status"></div>
       <section id="tab-usage">
-        <div class="stats three">
+        <div class="page-head"><div><h1>Usage</h1><div class="sub" id="usage-period"></div></div><span class="tag" id="status"></span></div>
+        <div class="stats">
           <div class="stat"><span class="k" id="st-usage-k">Usage</span><div class="v" id="st-usage"></div><div class="s" id="st-usage-s"></div></div>
           <div class="stat"><span class="k">Tokens left</span><div class="v" id="st-tokens"></div><div class="s" id="st-tokens-s"></div></div>
           <div class="stat"><span class="k">Seats</span><div class="v" id="st-seats"></div><div class="s" id="st-seats-s"></div></div>
         </div>
         <section class="card">
-          <div class="head"><h2 id="usage-title">Usage</h2><span class="sub" id="usage-period"></span></div>
-          <div class="usage-big" id="month-total"></div>
-          <div class="sub" id="month-note"></div>
-          <div class="chart-head">
-            <div><div class="chart-title">Daily usage</div><div class="sub">At your firm’s prices, by day.</div></div>
-            <div class="chart-tools"><div class="seg-group" id="chart-range"></div><div class="seg-group" id="chart-view"></div></div>
-          </div>
+          <div class="head"><div><h2>Daily usage</h2><div class="sub">At your firm’s prices, by day.</div></div><div class="chart-tools"><div class="seg-group" id="chart-range"></div><div class="seg-group" id="chart-view"></div></div></div>
           <div class="chart" id="chart"></div>
-          <div class="breakdown">
-            <div class="chart-head" style="margin-top:0"><div><div class="chart-title">Where it went</div><div class="sub" id="bd-sub"></div></div><div class="chart-tools"><div class="seg-group" id="bd-tabs"></div></div></div>
-            <div class="bars" id="bd-list"></div>
-          </div>
+        </section>
+        <section class="card">
+          <div class="head"><div><h2>Where it went</h2><div class="sub" id="bd-sub"></div></div><div class="chart-tools"><div class="seg-group" id="bd-tabs"></div></div></div>
+          <div class="bars" id="bd-list"></div>
           <div class="note warn-text" id="tokens-warn"></div>
         </section>
       </section>
       <section id="tab-billing" class="hidden">
-        <div class="stats three">
+        <div class="page-head"><div><h1>Billing</h1><div class="sub">Your plan, how you pay, and your invoices.</div></div><span class="tag" id="sub-status"></span></div>
+        <div class="stats">
           <div class="stat"><span class="k">Next payment</span><div class="v" id="st-next"></div><div class="s" id="st-next-s"></div></div>
           <div class="stat"><span class="k">Plan</span><div class="v" id="st-plan"></div><div class="s" id="st-plan-s"></div></div>
           <div class="stat"><span class="k">Payment method</span><div class="v" id="st-method"></div><div class="s" id="st-method-s"></div></div>
@@ -241,12 +233,12 @@
         <div class="grid">
           <div class="col">
             <section class="card">
-              <div class="head"><h2>Subscription</h2><span class="tag" id="sub-status"></span></div>
+              <div class="head"><h2>Plan</h2></div>
               <div id="plan"></div>
             </section>
-            <section class="card">
-              <div class="head"><h2>Invoices</h2></div>
-              <div id="invoices" class="empty"></div>
+            <section class="card help">
+              <div class="head"><h2>Questions</h2></div>
+              <div class="sub">About your plan or an invoice: <a href="mailto:support@opusjuris.com">support@opusjuris.com</a>.</div>
             </section>
           </div>
           <div class="col">
@@ -257,12 +249,12 @@
               <div id="wire" class="note hidden"></div>
               <div class="note" id="pay-note"></div>
             </section>
-            <section class="card help">
-              <div class="head"><h2>Questions</h2></div>
-              <div class="sub">About your plan or an invoice: <a href="mailto:support@opusjuris.com">support@opusjuris.com</a>.</div>
-            </section>
           </div>
         </div>
+        <section class="card" style="margin-top:20px">
+          <div class="head"><h2>Invoices</h2></div>
+          <div id="invoices" class="empty"></div>
+        </section>
       </section>
     </main>
     <main id="main-owner" class="hidden">
@@ -289,10 +281,11 @@
         <div class="note" id="owner-hint">Saving creates or updates the firm's subscription in Stripe from these terms.</div>
       </section>
     </main>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="app.js?v=28"></script>
+  <script src="app.js?v=29"></script>
 </body>
 </html>
