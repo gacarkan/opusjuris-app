@@ -98,19 +98,6 @@
   .tag.paid, .tag.active, .tag.on { background: var(--ok-bg); color: var(--ok); } .tag.open, .tag.past_due, .tag.unpaid, .tag.trialing { background: var(--warn-bg); color: var(--warn); } .tag.uncollectible, .tag.canceled { background: var(--bad-bg); color: var(--bad); }
   .tag:empty { display: none; }
   .empty { color: var(--muted); font-size: .92rem; }
-  .method { display: flex; align-items: center; gap: 12px; }
-  .method .icon { width: 40px; height: 28px; border-radius: 6px; background: var(--tint); color: var(--blue); display: grid; place-items: center; flex: none; }
-  .method b { display: block; font-size: .98rem; }
-  .method span { color: var(--muted); font-size: .84rem; }
-  .paylist { margin-top: 14px; border-top: 1px solid var(--line); }
-  .payrow { display: grid; grid-template-columns: 16px 1fr auto; gap: 2px 12px; align-items: center; width: 100%; padding: 11px 2px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); text-align: left; cursor: pointer; font: inherit; }
-  .payrow:hover { background: var(--bg); }
-  .payrow .radio { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--field); grid-row: 1 / span 2; box-sizing: border-box; }
-  .payrow.on .radio { border: 4.5px solid var(--blue); }
-  .payrow b { font-weight: 600; font-size: .92rem; }
-  .payrow .d { grid-column: 2; color: var(--muted); font-size: .8rem; }
-  .payrow em { grid-column: 3; grid-row: 1 / span 2; font-style: normal; font-weight: 500; font-size: .9rem; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
-  .payrow .cur { color: var(--muted); font-weight: 500; font-size: .78rem; margin-left: 8px; }
   /* the usage chart */
   .chart-tools { display: flex; gap: 8px; }
   .seg-group { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
@@ -148,39 +135,73 @@
   .brow .t i { display: block; height: 100%; background: var(--blue); border-radius: 3px; }
   .brow .more { color: var(--muted); font-size: .84rem; }
   .help a { color: var(--blue); text-decoration: none; font-weight: 600; } .help a:hover { text-decoration: underline; }
-  .plan-line { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
-  .plan-line b { font-size: 1.05rem; }
-  .plan-line .link { text-decoration: none; font-size: .88rem; } .plan-line .link:hover { text-decoration: underline; }
-  .kv-row { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); font-size: .9rem; }
-  .kv-row:empty { display: none; }
-  .kv-row span { color: var(--muted); display: block; font-size: .78rem; margin-bottom: 2px; }
-  .kv-row b { font-variant-numeric: tabular-nums; }
-  .pm-row { display: flex; align-items: center; gap: 12px; }
-  .pm-row .icon { width: 40px; height: 28px; border-radius: 6px; background: var(--tint); color: var(--blue); display: grid; place-items: center; flex: none; }
-  .pm-row .pm-text { flex: 1; min-width: 0; }
-  .pm-row b { display: block; font-size: .95rem; }
-  .pm-row span { color: var(--muted); font-size: .84rem; }
-  .chooser { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .28s cubic-bezier(.2,.7,.2,1), opacity .22s ease, margin-top .28s cubic-bezier(.2,.7,.2,1); margin-top: 0; }
-  .chooser.open { grid-template-rows: 1fr; opacity: 1; margin-top: 16px; }
-  .chooser-in { overflow: hidden; display: grid; gap: 12px; }
-  .chooser.open .chooser-in { padding-top: 16px; border-top: 1px solid var(--line); }
-  .choice-btn { transition: border-color .15s ease, background .15s ease, transform .15s ease; }
-  .choice-btn:active { transform: scale(.99); }
-  .secure { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; color: var(--muted); font-size: .8rem; }
-  @media (prefers-reduced-motion: reduce) { .chooser { transition: none; } }
-  .choose-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .choice-btn { display: grid; gap: 2px; text-align: left; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; cursor: pointer; }
-  .choice-btn:hover { border-color: var(--field); background: var(--bg); }
-  .choice-btn b { font-size: .92rem; }
-  .choice-btn span { color: var(--muted); font-size: .8rem; }
-  .choice-btn em { font-style: normal; font-weight: 600; font-size: .88rem; font-variant-numeric: tabular-nums; margin-top: 4px; }
-  .chooser .link { text-decoration: none; } .chooser .link:hover { text-decoration: underline; }
-  .checkout { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
-  .checkout .link { text-decoration: none; } .checkout .link:hover { text-decoration: underline; }
+  /* Billing as a checkout: the step on the left, the summary beside it */
+  .bill { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+  .bill-main { min-width: 0; }
+  .bill-side { position: sticky; top: 24px; }
+  .summary .sum-amount { display: flex; align-items: baseline; gap: 7px; margin: 2px 0 0; }
+  .summary .sum-amount b { font-size: 1.85rem; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .summary .sum-amount span { color: var(--muted); font-size: .9rem; }
+  .sum-rows { display: grid; gap: 9px; font-size: .9rem; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .sum-rows:empty { display: none; }
+  .sum-rows div { display: flex; justify-content: space-between; gap: 12px; }
+  .sum-rows span { color: var(--muted); }
+  .sum-rows b { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .sum-rows .total { margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--line); font-size: .95rem; }
+  .sum-rows .total span { display: grid; } .sum-rows .total small { font-size: .8rem; }
+  .sum-rows .total b { white-space: nowrap; }
+  .summary .note:empty { display: none; }
+  .summary .link { display: inline-block; margin-top: 14px; text-decoration: none; font-size: .88rem; }
+  .summary .link:hover { text-decoration: underline; }
+  .card .head .link { text-decoration: none; font-size: .88rem; margin-top: 2px; } .card .head .link:hover { text-decoration: underline; }
+  /* the saved method: one row, its brand mark, Default */
+  .saved-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; }
+  .brandmark { width: 44px; height: 30px; border-radius: 6px; border: 1px solid var(--line); background: #fff; display: grid; place-items: center; flex: none; overflow: hidden; }
+  .brandmark svg { display: block; width: 100%; height: 100%; }
+  .brandmark.plain { background: var(--tint); color: var(--blue); border-color: transparent; }
+  .brandmark.plain svg { width: 20px; height: 20px; }
+  .saved-text { flex: 1; min-width: 0; }
+  .saved-text b { display: block; font-size: .95rem; }
+  .saved-text span { color: var(--muted); font-size: .84rem; }
+  /* the ways to pay: one list, the chosen row opens with its form */
+  .pay-opts { border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+  .pay-opt { position: relative; }
+  .pay-opt + .pay-opt { border-top: 1px solid var(--line); }
+  .pay-opt:first-child .pay-head { border-radius: 10px 10px 0 0; } .pay-opt:last-child .pay-head { border-radius: 0 0 10px 10px; } .pay-opt:last-child.on .pay-head { border-radius: 0; }
+  .pay-opt.on { box-shadow: inset 0 0 0 1.5px var(--blue); border-radius: 10px; z-index: 1; }
+  .pay-opt.on + .pay-opt { border-top-color: transparent; }
+  .pay-head { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; border: 0; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: background .15s ease; }
+  .pay-head:hover { background: var(--bg); }
+  .pay-opt.on .pay-head { background: var(--tint); border-radius: 10px 10px 0 0; cursor: default; }
+  .pay-head .radio { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--field); box-sizing: border-box; flex: none; background: var(--card); transition: border .12s ease; }
+  .pay-opt.on .radio { border: 6px solid var(--blue); }
+  .pay-icon { width: 22px; color: var(--muted); display: grid; place-items: center; flex: none; }
+  .pay-opt.on .pay-icon { color: var(--blue); }
+  .pay-title { flex: 1; min-width: 0; display: grid; gap: 1px; }
+  .pay-title b { font-size: .95rem; }
+  .pay-title b .cur { color: var(--muted); font-weight: 500; font-size: .78rem; margin-left: 8px; }
+  .pay-title b .cur:empty { display: none; }
+  .pay-title span { color: var(--muted); font-size: .82rem; }
+  .pay-right { display: flex; align-items: center; gap: 10px; flex: none; }
+  .marks { display: flex; gap: 4px; }
+  .marks svg { display: block; width: 30px; height: 20px; border-radius: 3px; }
+  .save-tag { background: var(--ok-bg); color: var(--ok); font-size: .72rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+  .save-tag:empty { display: none; }
+  .pay-right em { font-style: normal; font-weight: 600; font-size: .9rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pay-right em:empty { display: none; }
+  .pay-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .28s cubic-bezier(.2,.7,.2,1); }
+  .pay-opt.on .pay-body { grid-template-rows: 1fr; }
+  .pay-body-in { overflow: hidden; }
+  .pay-body-pad { padding: 6px 16px 18px 48px; display: grid; gap: 10px; }
+  .pay-body-pad .btn { justify-self: start; }
   .checkout-wait { display: grid; gap: 4px; padding: 6px 0 2px; }
   .checkout-wait .skel.line { margin: 6px 0; }
-  .choice-btn[disabled] { opacity: .6; cursor: default; }
-  @media (max-width: 600px) { .choose-row { grid-template-columns: 1fr; } }
+  .pay-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
+  .pay-foot .link { text-decoration: none; font-size: .88rem; } .pay-foot .link:hover { text-decoration: underline; }
+  .secure { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: .8rem; }
+  @media (prefers-reduced-motion: reduce) { .pay-body { transition: none; } }
+  @media (max-width: 900px) { .bill { grid-template-columns: 1fr; } .bill-side { position: static; order: -1; } }
+  @media (max-width: 600px) { .marks { display: none; } .pay-body-pad { padding-left: 16px; } .pay-head { display: grid; grid-template-columns: 18px 22px 1fr; padding: 12px; } .pay-right { grid-column: 3; justify-content: flex-start; margin-top: 2px; } }
   .warn-text { color: var(--bad); }
   /* the owner's form */
   .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
@@ -268,29 +289,43 @@
       </section>
       <section id="tab-billing" class="hidden">
         <div class="page-head"><div><h1>Billing</h1><div class="sub">Your plan, payment method and invoices.</div></div></div>
+        <div class="bill">
+        <div class="bill-main">
         <section class="card">
-          <div class="head"><h2>Plan</h2><span class="tag" id="sub-status"></span></div>
-          <div class="plan-line"><div><b id="plan-name">Custom plan</b><div class="sub" id="plan-terms"></div></div><a class="link" href="mailto:support@opusjuris.com?subject=Plan%20change">Contact us to change</a></div>
-          <div class="kv-row" id="plan-next"></div>
-        </section>
-        <section class="card">
-          <div class="head"><h2>Payment method</h2><button type="button" class="btn quiet sm" id="add">Add payment method</button></div>
-          <div class="pm-row" id="pm-row"><div class="icon" id="method-icon"></div><div class="pm-text"><b id="method"></b><span id="method-note"></span></div><span class="tag" id="pm-default"></span></div>
-          <div class="chooser" id="chooser"><div class="chooser-in">
-            <div class="choose-row">
-              <button type="button" class="choice-btn" data-pay="bank"><b>Bank account</b><span>Drawn on each invoice</span><em id="price-bank"></em></button>
-              <button type="button" class="choice-btn" data-pay="card"><b>Card</b><span>Charged on each invoice</span><em id="price-card"></em></button>
+          <div class="head"><div><h2>Payment method</h2><div class="sub" id="pm-sub">How your invoices are paid.</div></div><button type="button" class="link hidden" id="pm-change">Change</button></div>
+          <div id="pm-skel"><span class="skel line"></span><span class="skel line"></span></div>
+          <div class="saved hidden" id="saved"><div class="saved-row"><span class="brandmark" id="saved-mark"></span><div class="saved-text"><b id="saved-title"></b><span id="saved-note"></span></div><span class="tag on" id="saved-tag"></span></div></div>
+          <div class="pay-opts hidden" id="pay-opts" role="radiogroup" aria-label="Ways to pay">
+            <div class="pay-opt" data-pay="card">
+              <button type="button" class="pay-head" role="radio" aria-checked="false"><span class="radio"></span><span class="pay-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span><span class="pay-title"><b>Card<span class="cur" id="cur-card"></span></b><span>Charged on each invoice</span></span><span class="pay-right"><span class="marks"><svg viewBox="0 0 30 20" aria-label="Visa"><rect width="30" height="20" rx="3" fill="#fff" stroke="#e2e8f0"/><text x="15" y="14" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-style="italic" font-size="9.5" fill="#1a1f71">VISA</text></svg><svg viewBox="0 0 30 20" aria-label="Mastercard"><rect width="30" height="20" rx="3" fill="#fff" stroke="#e2e8f0"/><circle cx="12" cy="10" r="5.5" fill="#eb001b"/><circle cx="18" cy="10" r="5.5" fill="#f79e1b" fill-opacity=".92"/></svg><svg viewBox="0 0 30 20" aria-label="American Express"><rect width="30" height="20" rx="3" fill="#2e77bc"/><text x="15" y="13" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="7" fill="#fff">AMEX</text></svg><svg viewBox="0 0 30 20" aria-label="Discover"><rect width="30" height="20" rx="3" fill="#fff" stroke="#e2e8f0"/><text x="12.5" y="12.6" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="5" fill="#231f20">DISCOVER</text><circle cx="25" cy="10" r="3" fill="#f58220"/></svg></span><em id="price-card"></em></span></button>
+              <div class="pay-body"><div class="pay-body-in"><div class="pay-body-pad"><div class="checkout-wait hidden" aria-live="polite"><span class="sub">Opening the secure form</span><span class="skel line"></span><span class="skel line"></span><span class="skel line"></span></div><div class="host" id="host-card"></div></div></div></div>
             </div>
-            <div class="sub">Or <button type="button" class="link" id="choose-wire">pay each invoice by wire</button>.</div>
-          </div></div>
-          <div id="checkout" class="checkout hidden"><div id="checkout-wait" class="checkout-wait hidden" aria-live="polite"><span class="sub">Opening the secure form</span><span class="skel line"></span><span class="skel line"></span><span class="skel line"></span></div><div id="checkout-host"></div><div class="sub"><button type="button" class="link" id="checkout-cancel">Cancel</button></div></div>
-          <div id="wire" class="note hidden"></div>
-          <div class="secure" id="pay-note"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Secure payments</div>
+            <div class="pay-opt" data-pay="bank">
+              <button type="button" class="pay-head" role="radio" aria-checked="false"><span class="radio"></span><span class="pay-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18"/><path d="M12 3l9 7H3l9-7z"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8"/><path d="M3 21h18"/></svg></span><span class="pay-title"><b>Bank account<span class="cur" id="cur-bank"></span></b><span>ACH debit, drawn on each invoice</span></span><span class="pay-right"><span class="save-tag" id="save-bank"></span><em id="price-bank"></em></span></button>
+              <div class="pay-body"><div class="pay-body-in"><div class="pay-body-pad"><div class="checkout-wait hidden" aria-live="polite"><span class="sub">Opening the secure form</span><span class="skel line"></span><span class="skel line"></span><span class="skel line"></span></div><div class="host" id="host-bank"></div></div></div></div>
+            </div>
+            <div class="pay-opt" data-pay="wire">
+              <button type="button" class="pay-head" role="radio" aria-checked="false"><span class="radio"></span><span class="pay-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M14 6l6 6-6 6"/></svg></span><span class="pay-title"><b>Wire transfer<span class="cur" id="cur-wire"></span></b><span>Invoiced by email, paid from your bank</span></span><span class="pay-right"><span class="save-tag" id="save-wire"></span><em id="price-wire"></em></span></button>
+              <div class="pay-body"><div class="pay-body-in"><div class="pay-body-pad"><div class="sub" id="wire-text"></div><button type="button" class="btn" id="wire-go">Pay by wire</button></div></div></div>
+            </div>
+          </div>
+          <div class="pay-foot"><span class="secure"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Encrypted and handled by our payment processor</span><button type="button" class="link hidden" id="pm-cancel">Cancel</button></div>
         </section>
         <section class="card">
           <div class="head"><h2>Invoices</h2></div>
           <div id="invoices" class="empty"></div>
         </section>
+        </div>
+        <aside class="bill-side">
+          <section class="card summary">
+            <div class="head"><h2>Summary</h2><span class="tag" id="sub-status"></span></div>
+            <div class="sum-amount"><b id="sum-amt"></b><span id="sum-per"></span></div>
+            <div class="sum-rows" id="sum-rows"></div>
+            <div class="note" id="plan-terms"></div>
+            <a class="link" href="mailto:support@opusjuris.com?subject=Plan%20change">Contact us to change your plan</a>
+          </section>
+        </aside>
+        </div>
       </section>
     </main>
     <main id="main-owner" class="hidden">
@@ -323,6 +358,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
   <script src="config.js?v=3"></script>
-  <script src="app.js?v=36"></script>
+  <script src="app.js?v=37"></script>
 </body>
 </html>
