@@ -393,7 +393,7 @@
   const ICON_COPY = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
   function wireBox(w, note) {
     if (w === undefined) return '<span class="skel line"></span><span class="skel line"></span><span class="skel line"></span>';
-    if (!w) return '<div class="wire-head">Transfer details</div><div class="wire-row"><span class="k">Not ready yet</span><span class="v">The transfer details are being set up. Each invoice email will carry them' + (note ? ", and for now: " + esc(note) : "") + ".</span></div>";
+    if (!w) return '<div class="wire-head">Transfer details</div><div class="wire-row one"><span class="v">The transfer details are being set up and will be shown here. Each invoice email carries them' + (note ? ", and for now: " + esc(note) : "") + ".</span></div>";
     const rows = [["Account holder", w.account_holder], ["Bank", w.bank_name], ["Account number", w.account_number, "num"], ["Routing number", w.routing_number, "num"], ["SWIFT code", w.swift_code, "num"], ["Bank address", w.bank_address], ["Reference", ref, "num"]].filter((r) => r[1]);
     const all = rows.map((r) => r[0] + ": " + r[1]).join("\n");
     return '<div class="wire-head"><span>Transfer details</span><button type="button" class="link copy" data-copy="' + esc(all) + '">Copy all</button></div>'

@@ -203,6 +203,7 @@
   .wire-head .link { text-decoration: none; font-size: .82rem; } .wire-head .link:hover { text-decoration: underline; }
   .wire-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 14px; border-top: 1px solid var(--line); font-size: .9rem; }
   .wire-row .k { color: var(--muted); font-size: .84rem; }
+  .wire-row.one { grid-template-columns: 1fr; } .wire-row.one .v { font-weight: 400; color: var(--muted); font-size: .88rem; }
   .wire-row .v { font-weight: 500; overflow-wrap: anywhere; }
   .wire-row .v.num { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .92rem; letter-spacing: .03em; }
   .copy { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--muted); font: inherit; font-size: .75rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
@@ -377,6 +378,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
   <script src="config.js?v=3"></script>
-  <script src="app.js?v=38"></script>
+  <script src="app.js?v=39"></script>
 </body>
 </html>
