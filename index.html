@@ -175,6 +175,8 @@
   .choice-btn span { color: var(--muted); font-size: .8rem; }
   .choice-btn em { font-style: normal; font-weight: 600; font-size: .88rem; font-variant-numeric: tabular-nums; margin-top: 4px; }
   .chooser .link { text-decoration: none; } .chooser .link:hover { text-decoration: underline; }
+  .checkout { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+  .checkout .link { text-decoration: none; } .checkout .link:hover { text-decoration: underline; }
   @media (max-width: 600px) { .choose-row { grid-template-columns: 1fr; } }
   .warn-text { color: var(--bad); }
   /* the owner's form */
@@ -278,6 +280,7 @@
             </div>
             <div class="sub">Or <button type="button" class="link" id="choose-wire">pay each invoice by wire</button>.</div>
           </div></div>
+          <div id="checkout" class="checkout hidden"><div id="checkout-host"></div><div class="sub"><button type="button" class="link" id="checkout-cancel">Cancel</button></div></div>
           <div id="wire" class="note hidden"></div>
           <div class="secure" id="pay-note"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Secure payments</div>
         </section>
@@ -315,7 +318,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <script src="config.js?v=2"></script>
-  <script src="app.js?v=33"></script>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script src="config.js?v=3"></script>
+  <script src="app.js?v=34"></script>
 </body>
 </html>

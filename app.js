@@ -388,13 +388,42 @@
     else w.classList.add("hidden");
     $("choices").querySelectorAll(".payrow").forEach((b) => b.addEventListener("click", () => { if (b.dataset.pay !== cur) choose(b.dataset.pay); }));
   }
+  // Stripe's form in the Payment method card (with a publishable key); on
+  // Stripe's own page otherwise.
+  let stripeJs = null, embedded = null;
+  function stripeClient() {
+    if (stripeJs) return stripeJs;
+    if (!cfg.stripePublishableKey || !window.Stripe) return null;
+    try { stripeJs = window.Stripe(cfg.stripePublishableKey); } catch (e) { stripeJs = null; }
+    return stripeJs;
+  }
+  function closeEmbedded() {
+    if (embedded) { try { embedded.destroy(); } catch (e) { /* already gone */ } embedded = null; }
+    $("checkout").classList.add("hidden");
+    $("checkout-host").innerHTML = "";
+  }
   async function choose(kind) {
     try {
       if (kind === "wire") { await call("choose-pay", { ref, pay_by: "wire" }, true); flash("ok", "You pay by wire. Each invoice arrives by email with the instructions."); await refresh(); return; }
-      const j = await call("setup-session", { ref, kind }, true);
-      location.href = j.url;
-    } catch (err) { if (await expiredOut(err)) return; flash("bad", err.message); }
+      const st = stripeClient();
+      const j = await call("setup-session", { ref, kind, embedded: !!st }, true);
+      if (!st || !j.client_secret) { location.href = j.url; return; }
+      closeEmbedded();
+      $("chooser").classList.remove("open");
+      $("checkout").classList.remove("hidden");
+      embedded = await st.initEmbeddedCheckout({
+        clientSecret: j.client_secret,
+        onComplete: async () => {
+          closeEmbedded();
+          try { await call("complete-setup", { ref, session_id: j.session_id }, true); flash("ok", "Your payment method was saved."); await refresh(); }
+          catch (err) { if (await expiredOut(err)) return; flash("bad", err.message); }
+        },
+      });
+      embedded.mount("#checkout-host");
+      $("checkout-host").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (err) { if (await expiredOut(err)) return; closeEmbedded(); flash("bad", err.message); }
   }
+  $("checkout-cancel").addEventListener("click", closeEmbedded);
   $("add").addEventListener("click", () => { $("chooser").classList.toggle("open"); });
   document.querySelectorAll(".choice-btn").forEach((b) => b.addEventListener("click", () => choose(b.dataset.pay)));
   $("choose-wire").addEventListener("click", () => choose("wire"));
