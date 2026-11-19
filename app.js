@@ -408,11 +408,17 @@
   // shape of what is coming instead of nothing.
   function busyChoices(on) { document.querySelectorAll(".choice-btn").forEach((b) => { b.disabled = on; }); }
   function waitForFrame() {
+    // Stripe's frame loads first and grows once its content is in; the
+    // placeholder stays until the frame has height, or 20 s at most.
     const host = $("checkout-host"), wait = $("checkout-wait");
-    const done = () => wait.classList.add("hidden");
-    const f = host.querySelector("iframe");
-    if (f) f.addEventListener("load", done, { once: true });
-    setTimeout(done, 6000);
+    const started = Date.now();
+    const tick = () => {
+      const f = host.querySelector("iframe");
+      const grown = f && f.getBoundingClientRect().height > 150;
+      if (grown || Date.now() - started > 20000 || wait.classList.contains("hidden")) { wait.classList.add("hidden"); return; }
+      setTimeout(tick, 250);
+    };
+    tick();
   }
   async function choose(kind) {
     try {
