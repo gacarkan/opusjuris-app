@@ -150,6 +150,7 @@
     $("chart-range").innerHTML = '<span class="skel" style="width:150px;height:30px;border-radius:8px"></span>'; $("chart-view").innerHTML = '<span class="skel" style="width:64px;height:30px;border-radius:8px"></span>';
     $("bd-list").innerHTML = lines(4); $("bd-tabs").innerHTML = ""; $("bd-sub").textContent = ""; $("tokens-warn").textContent = "";
     closeEmbedded();
+    payState.wire = undefined;
     for (const id of ["saved", "pay-opts", "pm-change", "pm-cancel"]) $(id).classList.add("hidden");
     $("pm-skel").classList.remove("hidden");
     $("invoices").className = ""; $("invoices").innerHTML = lines(2);
@@ -242,7 +243,8 @@
     $("price-wire").textContent = p ? usd(p.bank_monthly_usd) + " / month" : "";
     const save = p && Number(p.bank_discount_pct) > 0 ? "Save " + Number(p.bank_discount_pct) + "%" : "";
     $("save-bank").textContent = save; $("save-wire").textContent = save;
-    $("wire-text").textContent = j.wire_instructions ? "Each invoice arrives by email. Wire to: " + j.wire_instructions : "Each invoice arrives by email with the wire instructions, to be paid from your bank by its due date.";
+    if (pay === "wire") { payState.wire = j.wire || null; payState.wireNote = j.wire_instructions || ""; }
+    $("wire-box-saved").innerHTML = pay === "wire" ? wireBox(payState.wire, payState.wireNote) : "";
     payState.saved = !!m || pay === "wire";
     payState.current = pay === "wire" ? "wire" : m ? m.type : "";
     showPay(!payState.saved);
@@ -362,7 +364,7 @@
   const ICON_BANK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18"/><path d="M12 3l9 7H3l9-7z"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8"/><path d="M3 21h18"/></svg>';
   const ICON_WIRE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M14 6l6 6-6 6"/></svg>';
   function methodText(m, pay) {
-    if (pay === "wire") return { short: "Wire", sub: "Invoiced by email", long: "Paying by wire", note: "Each invoice arrives by email with wire instructions.", icon: ICON_WIRE };
+    if (pay === "wire") return { short: "Wire transfer", sub: "Invoiced by email", long: "Wire transfer", note: "Each invoice is emailed with the transfer details below and marked paid when the money arrives.", icon: ICON_WIRE };
     if (!m) return { short: "Not set", sub: "Add one to pay automatically", long: "No payment method on file", note: "Add one to pay each invoice automatically.", icon: ICON_CARD };
     if (m.type === "card") return { short: label(m.brand).replace(/^./, (c) => c.toUpperCase()) + " •••• " + m.last4, sub: m.exp_month ? "Expires " + String(m.exp_month).padStart(2, "0") + "/" + m.exp_year : "Card", long: label(m.brand).replace(/^./, (c) => c.toUpperCase()) + " card ending " + m.last4, note: m.exp_month ? "Expires " + String(m.exp_month).padStart(2, "0") + "/" + m.exp_year + ". Charged on each invoice." : "Charged on each invoice.", icon: ICON_CARD };
     if (m.type === "bank") return { short: "Bank •••• " + m.last4, sub: m.bank_name || "Bank debit", long: (m.bank_name || "Bank account") + " ending " + m.last4, note: "Bank debit (ACH), pulled on each invoice.", icon: ICON_BANK };
@@ -385,7 +387,47 @@
   // the list is open and the chosen row expands with Stripe's form inside it
   // (with a publishable key) or sends the firm to Stripe's own page.
   let stripeJs = null, embedded = null;
-  const payState = { saved: false, current: "", open: false };
+  const payState = { saved: false, current: "", open: false, wire: undefined, wireNote: "" };
+  // The transfer details as a list with Copy on each value; undefined while
+  // they load, null when Stripe has none for this account yet.
+  const ICON_COPY = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  function wireBox(w, note) {
+    if (w === undefined) return '<span class="skel line"></span><span class="skel line"></span><span class="skel line"></span>';
+    if (!w) return '<div class="wire-head">Transfer details</div><div class="wire-row"><span class="k">Not ready yet</span><span class="v">The transfer details are being set up. Each invoice email will carry them' + (note ? ", and for now: " + esc(note) : "") + ".</span></div>";
+    const rows = [["Account holder", w.account_holder], ["Bank", w.bank_name], ["Account number", w.account_number, "num"], ["Routing number", w.routing_number, "num"], ["SWIFT code", w.swift_code, "num"], ["Bank address", w.bank_address], ["Reference", ref, "num"]].filter((r) => r[1]);
+    const all = rows.map((r) => r[0] + ": " + r[1]).join("\n");
+    return '<div class="wire-head"><span>Transfer details</span><button type="button" class="link copy" data-copy="' + esc(all) + '">Copy all</button></div>'
+      + rows.map((r) => '<div class="wire-row"><span class="k">' + esc(r[0]) + '</span><span class="v' + (r[2] ? " " + r[2] : "") + '">' + esc(r[1]) + '</span><button type="button" class="copy" data-copy="' + esc(r[1]) + '" aria-label="Copy ' + esc(r[0].toLowerCase()) + '">' + ICON_COPY + "Copy</button></div>").join("")
+      + '<div class="wire-foot">ACH and wires inside the United States use the routing number; wires from abroad use the SWIFT code. Put your firm code <b>' + esc(ref) + "</b> in the reference so the payment is matched to your firm." + (note ? " " + esc(note) : "") + "</div>";
+  }
+  function copyText(text) {
+    // the clipboard API where the page may use it; the selection trick elsewhere
+    try { if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text); return true; } } catch (e) { /* below */ }
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    ta.remove();
+    return ok;
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest(".copy");
+    if (!b) return;
+    if (!copyText(b.dataset.copy)) return;
+    const was = b.innerHTML;
+    b.classList.add("done"); b.textContent = "Copied";
+    setTimeout(() => { b.classList.remove("done"); b.innerHTML = was; }, 1600);
+  });
+  async function loadWire() {
+    if (payState.wire !== undefined) { $("wire-box-row").innerHTML = wireBox(payState.wire, payState.wireNote); return; }
+    $("wire-box-row").innerHTML = wireBox(undefined);
+    try {
+      const j = await call("wire-details", { ref }, true);
+      payState.wire = j.wire || null; payState.wireNote = j.wire_instructions || "";
+    } catch (err) { if (await expiredOut(err)) return; payState.wire = null; }
+    $("wire-box-row").innerHTML = wireBox(payState.wire, payState.wireNote);
+  }
   function stripeClient() {
     if (stripeJs) return stripeJs;
     if (!cfg.stripePublishableKey || !window.Stripe) return null;
@@ -432,7 +474,7 @@
     if (!opt || opt.classList.contains("on")) return;
     closeEmbedded();
     markOpt(kind);
-    if (kind === "wire") return;
+    if (kind === "wire") { loadWire(); return; }
     const st = stripeClient();
     const wait = opt.querySelector(".checkout-wait"), host = opt.querySelector(".host");
     if (st) wait.classList.remove("hidden");
@@ -456,7 +498,7 @@
   document.querySelectorAll(".pay-head").forEach((h) => h.addEventListener("click", () => select(h.closest(".pay-opt").dataset.pay)));
   $("wire-go").addEventListener("click", async () => {
     const b = $("wire-go"); b.disabled = true;
-    try { await call("choose-pay", { ref, pay_by: "wire" }, true); flash("ok", "You pay by wire. Each invoice arrives by email with the instructions."); await refresh(); }
+    try { payState.wire = undefined; await call("choose-pay", { ref, pay_by: "wire" }, true); flash("ok", "Wire transfer set. Each invoice arrives by email with the transfer details shown below."); await refresh(); }
     catch (err) { if (await expiredOut(err)) return; flash("bad", err.message); }
     finally { b.disabled = false; }
   });
