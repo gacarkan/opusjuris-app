@@ -400,17 +400,28 @@
   function closeEmbedded() {
     if (embedded) { try { embedded.destroy(); } catch (e) { /* already gone */ } embedded = null; }
     $("checkout").classList.add("hidden");
+    $("checkout-wait").classList.add("hidden");
     $("checkout-host").innerHTML = "";
+    busyChoices(false);
+  }
+  // While the form is on its way: the choices wait, and the card shows the
+  // shape of what is coming instead of nothing.
+  function busyChoices(on) { document.querySelectorAll(".choice-btn").forEach((b) => { b.disabled = on; }); }
+  function waitForFrame() {
+    const host = $("checkout-host"), wait = $("checkout-wait");
+    const done = () => wait.classList.add("hidden");
+    const f = host.querySelector("iframe");
+    if (f) f.addEventListener("load", done, { once: true });
+    setTimeout(done, 6000);
   }
   async function choose(kind) {
     try {
       if (kind === "wire") { await call("choose-pay", { ref, pay_by: "wire" }, true); flash("ok", "You pay by wire. Each invoice arrives by email with the instructions."); await refresh(); return; }
       const st = stripeClient();
+      busyChoices(true);
+      if (st) { closeEmbedded(); busyChoices(true); $("chooser").classList.remove("open"); $("checkout").classList.remove("hidden"); $("checkout-wait").classList.remove("hidden"); }
       const j = await call("setup-session", { ref, kind, embedded: !!st }, true);
       if (!st || !j.client_secret) { location.href = j.url; return; }
-      closeEmbedded();
-      $("chooser").classList.remove("open");
-      $("checkout").classList.remove("hidden");
       embedded = await st.initEmbeddedCheckout({
         clientSecret: j.client_secret,
         onComplete: async () => {
@@ -420,7 +431,8 @@
         },
       });
       embedded.mount("#checkout-host");
-      $("checkout-host").scrollIntoView({ behavior: "smooth", block: "nearest" });
+      waitForFrame();
+      $("checkout").scrollIntoView({ behavior: "smooth", block: "nearest" });
     } catch (err) { if (await expiredOut(err)) return; closeEmbedded(); flash("bad", err.message); }
   }
   $("checkout-cancel").addEventListener("click", closeEmbedded);
