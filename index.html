@@ -130,6 +130,16 @@
   .chart table td.num { padding-right: 0; }
   .chart .empty { padding: 40px 0; text-align: center; }
   .chart .axis { display: flex; justify-content: space-between; color: var(--muted); font-size: .76rem; margin-top: 6px; }
+  /* placeholders while the account loads: the shape of each figure, shimmering */
+  .skel { display: inline-block; height: 1em; max-width: 100%; border-radius: 6px; vertical-align: middle; background: linear-gradient(90deg, var(--line) 25%, var(--card) 50%, var(--line) 75%); background-size: 400% 100%; animation: skel-shimmer 1.4s ease-in-out infinite; }
+  .skel.line { display: block; height: 14px; width: 100%; margin: 10px 0; }
+  .skel.line:nth-child(2n) { width: 80%; }
+  .skel-chart { display: flex; align-items: flex-end; gap: 6px; height: 240px; padding-top: 10px; }
+  .skel-chart i { flex: 1; display: block; border-radius: 3px 3px 0 0; background: var(--line); animation: skel-fade 1.4s ease-in-out infinite; }
+  .skel-chart i:nth-child(odd) { animation-delay: .3s; }
+  @keyframes skel-shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+  @keyframes skel-fade { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .skel, .skel-chart i { animation: none; } }
   .bars { display: grid; gap: 12px; margin-top: 4px; }
   .brow { display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; align-items: baseline; font-size: .9rem; }
   .brow .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
