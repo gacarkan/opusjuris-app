@@ -29,6 +29,17 @@
   // What rides in the tab for a staff session instead of a firm code (a
   // firm code is letters, digits and dashes, so this can never be one).
   const OWNER_REF = "@staff";
+  // This browser's random id for the company screen: the server emails the
+  // owner the first time it sees one. Kept for good when storage allows,
+  // for the tab when it does not.
+  function deviceId() {
+    const K = "oj-device";
+    const make = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+    for (const store of [window.localStorage, window.sessionStorage]) {
+      try { let v = store.getItem(K); if (!v) { v = make(); store.setItem(K, v); } return v; } catch (e) { /* blocked: try the next */ }
+    }
+    return "";
+  }
   let ref = "", pending = { ref: "", email: "" }, current = null;
   const getRef = () => { try { return sessionStorage.getItem(REF_KEY) || ""; } catch (e) { return ""; } };
   const setRef = (v) => { try { v ? sessionStorage.setItem(REF_KEY, v) : sessionStorage.removeItem(REF_KEY); } catch (e) { /* private mode: the code is asked for again */ } };
@@ -570,7 +581,7 @@
   let companyRows = [];
   async function loadCompany() {
     try {
-      const j = await call("admin/overview", {}, true);
+      const j = await call("admin/overview", { device: deviceId() }, true);
       const rows = j.accounts || [], t = j.totals || {};
       companyRows = rows;
       $("me").textContent = j.email || $("me").textContent;
