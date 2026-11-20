@@ -3,7 +3,9 @@
 // card, or wire) and to see invoices. Opus Juris staff see every account and
 // set each firm's terms from the same page.
 // Sign in is the firm code and admin email plus a one-time code emailed
-// to that address (Supabase Auth); everything else goes to the back end
+// to that address (Supabase Auth); Opus Juris staff sign in with their
+// opusjuris.com email alone and get the company screen (firms, money,
+// invoices across firms) instead of a firm's. Everything else goes to the back end
 // (Python on PythonAnywhere, the opusjuris-backend repo), which checks the
 // signed-in email against the account. Card and bank details are entered on
 // Stripe's own page, never here.
@@ -24,6 +26,10 @@
   // The firm code rides in the tab with the session; a new tab or a new
   // visit starts at the sign-in form.
   const REF_KEY = "oj-account-ref";
+  // What rides in the tab for a staff session instead of a firm code (a
+  // firm code is letters, digits and dashes, so this can never be one).
+  const OWNER_REF = "@staff";
+  const STAFF_MAIL = /@opusjuris\.com$/i;
   let ref = "", pending = { ref: "", email: "" }, current = null;
   const getRef = () => { try { return sessionStorage.getItem(REF_KEY) || ""; } catch (e) { return ""; } };
   const setRef = (v) => { try { v ? sessionStorage.setItem(REF_KEY, v) : sessionStorage.removeItem(REF_KEY); } catch (e) { /* private mode: the code is asked for again */ } };
@@ -59,10 +65,20 @@
     $("form-code").classList.add("hidden");
     $("signin-err").textContent = msg || "";
   }
+  // An opusjuris.com address is staff: the firm code box goes away
+  function staffMode() {
+    const staff = STAFF_MAIL.test($("email").value.trim());
+    $("ref-wrap").classList.toggle("hidden", staff);
+    $("ref").required = !staff;
+    $("signin-sub").textContent = staff ? "Opus Juris staff." : "Your firm's Opus Juris account.";
+    return staff;
+  }
+  $("email").addEventListener("input", staffMode);
   $("form-ref").addEventListener("submit", async (e) => {
     e.preventDefault();
     $("signin-err").textContent = "";
-    pending = { ref: $("ref").value.trim().toUpperCase(), email: $("email").value.trim().toLowerCase() };
+    const staff = staffMode();
+    pending = { ref: staff ? "" : $("ref").value.trim().toUpperCase(), email: $("email").value.trim().toLowerCase(), staff };
     $("send").disabled = true;
     try {
       await call("request-code", pending, false);
@@ -125,7 +141,7 @@
     verifying = false;
     $("verify").textContent = "Sign in";
     if (error || !data || !data.session) { $("signin-err").textContent = "That code is wrong or has expired. Check it, or ask for a new one."; clearCode(); focusBox(0); return; }
-    ref = pending.ref;
+    ref = pending.staff ? OWNER_REF : pending.ref;
     setRef(ref);
     enter();
   }
@@ -156,6 +172,7 @@
     $("invoices").className = ""; $("invoices").innerHTML = lines(2);
   }
   async function enter() {
+    if (ref === OWNER_REF) return enterOwner();
     $("signin").classList.add("hidden");
     $("app").classList.remove("hidden");
     showFirm();
@@ -186,9 +203,6 @@
     const pay = (p && p.pay_by) || "auto";
     $("me").textContent = a.admin_email;
     $("firm").textContent = a.firm_name;
-    const wantOwner = j.is_owner && location.hash === "#accounts";
-    $("owner-btn").classList.toggle("hidden", !wantOwner);
-    if (wantOwner && $("main-owner").classList.contains("hidden")) showOwner();
     const st = $("status");
     const standing = !p ? ["Custom plan", ""] : sub && sub.status === "past_due" ? ["Past due", "past_due"] : sub && sub.status === "unpaid" ? ["Unpaid", "unpaid"] : ["Active", "active"];
     st.textContent = standing[0]; st.className = "tag " + standing[1];
@@ -513,30 +527,85 @@
     $("tab-billing").classList.toggle("hidden", !billing);
     document.querySelectorAll(".nav-item").forEach((b) => b.classList.toggle("on", b.dataset.tab === (billing ? "billing" : "usage")));
     const want = billing ? "#billing" : "";
-    if (location.hash !== want && location.hash !== "#accounts") history.replaceState(null, "", location.pathname + want);
+    if (location.hash !== want) history.replaceState(null, "", location.pathname + want);
     if (!billing && chartState.view === "chart" && current) drawChart();
   }
   document.querySelectorAll(".nav-item").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
-  function showFirm() { $("main-owner").classList.add("hidden"); $("main-firm").classList.remove("hidden"); $("owner-btn").classList.add("hidden"); if (location.hash === "#accounts") history.replaceState(null, "", location.pathname); }
-  function showOwner() { $("main-firm").classList.add("hidden"); $("main-owner").classList.remove("hidden"); $("owner-btn").textContent = "My account"; $("owner-btn").classList.remove("hidden"); loadAccounts(); }
-  $("owner-btn").addEventListener("click", () => showFirm());
-  window.addEventListener("hashchange", () => { if (current && current.is_owner && location.hash === "#accounts") showOwner(); });
+  function showFirm() { $("main-owner").classList.add("hidden"); $("nav-owner").classList.add("hidden"); $("main-firm").classList.remove("hidden"); $("nav-firm").classList.remove("hidden"); }
   function oflash(kind, text) { const f = $("owner-flash"); f.className = "banner " + (text ? kind : "hidden"); f.textContent = text || ""; }
-  async function loadAccounts() {
-    oflash("", "");
+  // Firms or Invoices, kept in the address (#invoices) so a refresh stays put
+  function showOwnerTab(name) {
+    const inv = name === "invoices";
+    $("otab-firms").classList.toggle("hidden", inv);
+    $("otab-invoices").classList.toggle("hidden", !inv);
+    document.querySelectorAll("#nav-owner .nav-item").forEach((b) => b.classList.toggle("on", b.dataset.otab === (inv ? "invoices" : "firms")));
+    const want = inv ? "#invoices" : "";
+    if (location.hash !== want) history.replaceState(null, "", location.pathname + want);
+  }
+  document.querySelectorAll("#nav-owner .nav-item").forEach((b) => b.addEventListener("click", () => showOwnerTab(b.dataset.otab)));
+  async function enterOwner() {
+    $("signin").classList.add("hidden");
+    $("app").classList.remove("hidden");
+    $("main-firm").classList.add("hidden"); $("nav-firm").classList.add("hidden");
+    $("main-owner").classList.remove("hidden"); $("nav-owner").classList.remove("hidden");
+    $("firm").textContent = "Opus Juris";
+    const { data } = await sb.auth.getSession();
+    $("me").textContent = data && data.session && data.session.user ? data.session.user.email : "";
+    showOwnerTab(location.hash === "#invoices" ? "invoices" : "firms");
+    const sk = (w) => '<span class="skel" style="width:' + w + '"></span>';
+    for (const id of ["os-firms", "os-monthly", "os-open"]) { $(id).innerHTML = sk("60%"); $(id + "-s").innerHTML = sk("50%"); }
+    await loadCompany();
+  }
+  // The standing of a firm as a word and a tag color
+  function standingText(a) {
+    const s = a.standing;
+    if (s === "inactive") return ["Inactive", ""];
+    if (s === "no_terms") return ["No terms yet", "no_terms"];
+    if (s === "starts") return ["Starts " + dateText(a.starts_on), "starts"];
+    if (s === "ended") return ["Ended", "canceled"];
+    if (s === "active" || s === "trialing") return ["Active", "active"];
+    if (s === "past_due") return ["Past due", "past_due"];
+    if (s === "unpaid") return ["Unpaid", "unpaid"];
+    if (s === "incomplete") return ["Payment failed", "unpaid"];
+    if (s === "paused") return ["Paused", ""];
+    return ["No subscription", "none"];
+  }
+  function invoiceRows(list, paid) {
+    if (!list.length) return null;
+    return '<table><thead><tr><th>Firm</th><th class="hide-sm">Invoice</th><th class="num">Amount</th><th>' + (paid ? "Paid" : "Due") + '</th><th></th></tr></thead><tbody>' + list.map((i) =>
+      '<tr><td><b>' + esc(i.firm_name || "Unknown firm") + '</b><span class="sub-line">' + esc(i.ref_no) + '</span></td><td class="hide-sm">' + esc(i.number || "") + '</td><td class="num">' + esc(money(paid ? i.amount_paid : i.amount_due, i.currency)) + "</td><td>"
+      + (paid ? esc(day(i.paid_at || i.created)) : esc(day(i.due_date)) + (i.past_due ? '<span class="tag past_due">Past due</span>' : "")) + '</td><td class="act">' + (i.hosted_invoice_url ? '<a class="link" href="' + esc(i.hosted_invoice_url) + '" target="_blank" rel="noopener">View</a>' : "") + "</td></tr>").join("") + "</tbody></table>";
+  }
+  let companyRows = [];
+  async function loadCompany() {
     try {
-      const j = await call("admin/accounts", {}, true);
-      const rows = j.accounts || [];
+      const j = await call("admin/overview", {}, true);
+      const rows = j.accounts || [], t = j.totals || {};
+      companyRows = rows;
+      $("me").textContent = j.email || $("me").textContent;
+      $("owner-sub").textContent = rows.length ? rows.length + (rows.length === 1 ? " firm" : " firms") + " on the books" : "";
+      $("os-firms").textContent = String(t.firms_active || 0);
+      $("os-firms-s").textContent = (t.firms_starting ? t.firms_starting + " starting later" : "") + (t.firms_starting && t.firms_attention ? ", " : "") + (t.firms_attention ? t.firms_attention + " need attention" : "") || "Active today";
+      $("os-monthly").textContent = usd(t.monthly_usd || 0);
+      $("os-monthly-s").textContent = "Agreed monthly terms";
+      $("os-open").textContent = money(t.outstanding_cents || 0, "usd");
+      $("os-open-s").textContent = t.open_count ? t.open_count + (t.open_count === 1 ? " open invoice" : " open invoices") + (t.past_due_count ? ", " + t.past_due_count + " past due" : "") : "No open invoices";
       $("owner-list").className = rows.length ? "acct-list" : "empty";
-      $("owner-list").innerHTML = rows.length ? '<table><thead><tr><th>Firm</th><th>Firm code</th><th class="hide-sm">Administrator</th><th class="num">Monthly</th><th class="hide-sm">Term</th><th>Pays by</th><th></th></tr></thead><tbody>' + rows.map((a) =>
-        '<tr data-ref="' + esc(a.ref_no) + '"><td><b>' + esc(a.firm_name) + "</b>" + (a.active ? "" : ' <span class="tag">Inactive</span>') + "</td><td>" + esc(a.ref_no) + '</td><td class="hide-sm">' + esc(a.admin_email) + '</td><td class="num">' + (a.monthly_usd != null ? esc(usd(a.monthly_usd)) : "") + '</td><td class="hide-sm">' + (a.term_months ? esc(a.term_months + " mo from " + dateText(a.starts_on)) : "") + "</td><td>" + (a.pay_by === "wire" ? "Wire" : "Saved method") + '</td><td class="act"><span class="link">Edit</span></td></tr>').join("") + "</tbody></table>" : "No accounts yet.";
+      $("owner-list").innerHTML = rows.length ? '<table><thead><tr><th>Firm</th><th class="hide-sm">Administrator</th><th class="num">Monthly</th><th class="hide-sm">Term</th><th class="hide-sm">Pays by</th><th>Standing</th><th></th></tr></thead><tbody>' + rows.map((a) => {
+        const st = standingText(a);
+        return '<tr data-ref="' + esc(a.ref_no) + '"><td><b>' + esc(a.firm_name) + '</b><span class="sub-line">' + esc(a.ref_no) + '</span></td><td class="hide-sm">' + esc(a.admin_email) + '</td><td class="num">' + (a.monthly_usd != null ? esc(usd(a.monthly_usd)) : "") + '</td><td class="hide-sm">' + (a.term_months ? esc(a.term_months + " mo from " + dateText(a.starts_on)) : "") + '</td><td class="hide-sm">' + (a.pay_by === "wire" ? "Wire" : "Saved method") + '</td><td><span class="tag ' + st[1] + '">' + esc(st[0]) + '</span></td><td class="act"><span class="link">Edit</span></td></tr>';
+      }).join("") + "</tbody></table>" : "No firms yet. New firm starts the first one.";
       $("owner-list").querySelectorAll("tr[data-ref]").forEach((tr) => tr.addEventListener("click", () => edit(rows.find((a) => a.ref_no === tr.dataset.ref))));
+      const open = invoiceRows(j.open_invoices || [], false), paid = invoiceRows(j.paid_invoices || [], true);
+      $("owner-open").className = open ? "inv-list" : "empty"; $("owner-open").innerHTML = open || "Nothing outstanding.";
+      $("owner-paid").className = paid ? "inv-list" : "empty"; $("owner-paid").innerHTML = paid || "No payments yet.";
     } catch (err) { if (await expiredOut(err)) return; oflash("bad", err.message); }
   }
   function edit(a) {
+    oflash("", "");
     const f = $("owner-form");
     $("owner-edit").classList.remove("hidden");
-    $("owner-edit-title").textContent = a ? a.firm_name : "New account";
+    $("owner-edit-title").textContent = a ? a.firm_name : "New firm";
     f.ref_no.value = a ? a.ref_no : ""; f.ref_no.readOnly = !!a;
     f.firm_name.value = a ? a.firm_name : ""; f.admin_email.value = a ? a.admin_email : "";
     f.monthly_usd.value = a && a.monthly_usd != null ? a.monthly_usd : ""; f.term_months.value = a && a.term_months ? a.term_months : "";
@@ -555,10 +624,10 @@
     $("owner-save").disabled = true;
     try {
       const j = await call("admin/account", b, true);
-      oflash(j.warning ? "warn" : "ok", j.warning || ("Saved " + (j.account ? j.account.firm_name : "") + "."));
+      const a = j.account;
+      oflash(j.warning ? "warn" : "ok", j.warning || (a ? "Saved " + a.firm_name + ". Its administrator signs in at app.opusjuris.com with firm code " + a.ref_no + " and " + a.admin_email + "." : "Saved."));
       $("owner-edit").classList.add("hidden");
-      await loadAccounts();
-      if (j.account && j.account.ref_no === ref) { try { await refresh(); } catch (_) { /* shown on the next visit */ } }
+      await loadCompany();
     } catch (err) { if (await expiredOut(err)) return; oflash("bad", err.message); }
     $("owner-save").disabled = false;
   });

@@ -232,6 +232,11 @@
   .fields .check input { width: auto; margin: 0; }
   .fields .row { display: flex; gap: 10px; }
   .acct-list td.act { text-align: right; }
+  .tag.starts { background: var(--tint); color: var(--blue); } .tag.no_terms, .tag.none { background: var(--warn-bg); color: var(--warn); }
+  .acct-list td .sub-line, .inv-list td .sub-line { display: block; color: var(--muted); font-size: .8rem; }
+  .acct-list th, .inv-list th, .acct-list .tag, .inv-list .tag { white-space: nowrap; }
+  .inv-list td.act { text-align: right; } .inv-list .tag { margin-left: 6px; } .inv-list th.num, .inv-list td.num { padding-right: 18px; }
+  .signin-sub { min-height: 1.5em; }
   .acct-list th.num, .acct-list td.num { padding-right: 18px; }
   .acct-list tr[data-ref] { cursor: pointer; } .acct-list tr[data-ref]:hover td { background: var(--tint); }
   @media (max-width: 900px) {
@@ -255,9 +260,11 @@
     <div class="box">
       <form id="form-ref">
         <h1>Sign in</h1>
-        <p>Your firm's Opus Juris account.</p>
+        <p class="signin-sub" id="signin-sub">Your firm's Opus Juris account.</p>
+        <div id="ref-wrap">
         <label for="ref">Firm code</label>
         <input id="ref" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
+        </div>
         <label for="email">Email</label>
         <input id="email" type="email" autocomplete="email" required>
         <button class="btn" id="send">Continue</button>
@@ -277,13 +284,16 @@
   <div id="app" class="hidden">
     <aside class="side">
       <a class="brand" href="https://opusjuris.com" aria-label="Opus Juris"><img src="assets/logo.png" alt="Opus Juris"></a>
-      <nav class="nav" aria-label="Sections">
+      <nav class="nav hidden" id="nav-owner" aria-label="Sections">
+        <button type="button" class="nav-item on" data-otab="firms"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/></svg>Firms</button>
+        <button type="button" class="nav-item" data-otab="invoices"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8"/></svg>Invoices</button>
+      </nav>
+      <nav class="nav" id="nav-firm" aria-label="Sections">
         <button type="button" class="nav-item on" data-tab="usage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="8"/><rect x="12" y="6" width="3" height="12"/><rect x="17" y="13" width="3" height="5"/></svg>Usage</button>
         <button type="button" class="nav-item" data-tab="billing"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Billing</button>
       </nav>
       <div class="side-foot">
         <div class="who"><b id="firm"></b><span id="me"></span></div>
-        <button class="btn quiet sm hidden" id="owner-btn">Accounts</button>
         <button class="btn quiet sm" id="signout">Sign out</button>
       </div>
     </aside>
@@ -350,26 +360,45 @@
     </main>
     <main id="main-owner" class="hidden">
       <div id="owner-flash" class="banner hidden" role="status"></div>
-      <section class="card">
-        <div class="head"><h2>Accounts</h2><button class="btn quiet sm" id="owner-new">New account</button></div>
-        <div id="owner-list" class="empty">Loading</div>
+      <section id="otab-firms">
+        <div class="page-head"><div><h1>Firms</h1><div class="sub" id="owner-sub"></div></div><button class="btn sm" id="owner-new">New firm</button></div>
+        <div class="stats">
+          <div class="stat"><span class="k">Firms</span><div class="v" id="os-firms"></div><div class="s" id="os-firms-s"></div></div>
+          <div class="stat"><span class="k">Monthly revenue</span><div class="v" id="os-monthly"></div><div class="s" id="os-monthly-s"></div></div>
+          <div class="stat"><span class="k">Outstanding</span><div class="v" id="os-open"></div><div class="s" id="os-open-s"></div></div>
+        </div>
+        <section class="card hidden" id="owner-edit">
+          <div class="head"><h2 id="owner-edit-title">Firm</h2></div>
+          <form id="owner-form" class="fields">
+            <label>Firm code<input name="ref_no" autocapitalize="characters" spellcheck="false" required></label>
+            <label>Firm<input name="firm_name" required></label>
+            <label>Administrator email<input name="admin_email" type="email" required></label>
+            <label>Monthly amount, dollars<input name="monthly_usd" type="number" min="0" step="0.01"></label>
+            <label>Months<input name="term_months" type="number" min="1" step="1"></label>
+            <label>Starts on<input name="starts_on" type="date"></label>
+            <label>Bank discount, percent<input name="bank_discount_pct" type="number" min="0" max="10" step="0.5" value="3"></label>
+            <label>Pays by<select name="pay_by"><option value="auto">Saved card or bank account</option><option value="wire">Wire, invoiced by email</option></select></label>
+            <label class="wide">Notes<input name="notes"></label>
+            <label class="check"><input name="active" type="checkbox" checked> Active</label>
+            <div class="wide row"><button class="btn" id="owner-save">Save</button><button type="button" class="btn quiet" id="owner-cancel">Cancel</button></div>
+          </form>
+          <div class="note" id="owner-hint">Saving creates or updates the firm's subscription in Stripe from these terms. Nothing is charged before the start date. The administrator signs in at app.opusjuris.com with the firm code and this email.</div>
+        </section>
+        <section class="card">
+          <div class="head"><h2>Every firm</h2></div>
+          <div id="owner-list" class="empty">Loading</div>
+        </section>
       </section>
-      <section class="card hidden" id="owner-edit">
-        <div class="head"><h2 id="owner-edit-title">Account</h2></div>
-        <form id="owner-form" class="fields">
-          <label>Firm code<input name="ref_no" autocapitalize="characters" spellcheck="false" required></label>
-          <label>Firm<input name="firm_name" required></label>
-          <label>Administrator email<input name="admin_email" type="email" required></label>
-          <label>Monthly amount, dollars<input name="monthly_usd" type="number" min="0" step="0.01"></label>
-          <label>Months<input name="term_months" type="number" min="1" step="1"></label>
-          <label>Starts on<input name="starts_on" type="date"></label>
-          <label>Bank discount, percent<input name="bank_discount_pct" type="number" min="0" max="10" step="0.5" value="3"></label>
-          <label>Pays by<select name="pay_by"><option value="auto">Saved card or bank account</option><option value="wire">Wire, invoiced by email</option></select></label>
-          <label class="wide">Notes<input name="notes"></label>
-          <label class="check"><input name="active" type="checkbox" checked> Active</label>
-          <div class="wide row"><button class="btn" id="owner-save">Save</button><button type="button" class="btn quiet" id="owner-cancel">Cancel</button></div>
-        </form>
-        <div class="note" id="owner-hint">Saving creates or updates the firm's subscription in Stripe from these terms.</div>
+      <section id="otab-invoices" class="hidden">
+        <div class="page-head"><div><h1>Invoices</h1><div class="sub">Across every firm.</div></div></div>
+        <section class="card">
+          <div class="head"><h2>Open</h2></div>
+          <div id="owner-open" class="empty">Loading</div>
+        </section>
+        <section class="card">
+          <div class="head"><h2>Recently paid</h2></div>
+          <div id="owner-paid" class="empty">Loading</div>
+        </section>
       </section>
     </main>
     </div>
@@ -378,6 +407,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
   <script src="config.js?v=3"></script>
-  <script src="app.js?v=39"></script>
+  <script src="app.js?v=40"></script>
 </body>
 </html>
