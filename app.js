@@ -3,9 +3,9 @@
 // card, or wire) and to see invoices. Opus Juris staff see every account and
 // set each firm's terms from the same page.
 // Sign in is the firm code and admin email plus a one-time code emailed
-// to that address (Supabase Auth); Opus Juris staff sign in with their
-// opusjuris.com email alone and get the company screen (firms, money,
-// invoices across firms) instead of a firm's. Everything else goes to the back end
+// to that address (Supabase Auth); Opus Juris staff type the staff code in
+// the firm code box and get the company screen (firms, money, invoices
+// across firms) instead of a firm's. Everything else goes to the back end
 // (Python on PythonAnywhere, the opusjuris-backend repo), which checks the
 // signed-in email against the account. Card and bank details are entered on
 // Stripe's own page, never here.
@@ -29,7 +29,6 @@
   // What rides in the tab for a staff session instead of a firm code (a
   // firm code is letters, digits and dashes, so this can never be one).
   const OWNER_REF = "@staff";
-  const STAFF_MAIL = /@opusjuris\.com$/i;
   let ref = "", pending = { ref: "", email: "" }, current = null;
   const getRef = () => { try { return sessionStorage.getItem(REF_KEY) || ""; } catch (e) { return ""; } };
   const setRef = (v) => { try { v ? sessionStorage.setItem(REF_KEY, v) : sessionStorage.removeItem(REF_KEY); } catch (e) { /* private mode: the code is asked for again */ } };
@@ -65,23 +64,15 @@
     $("form-code").classList.add("hidden");
     $("signin-err").textContent = msg || "";
   }
-  // An opusjuris.com address is staff: the firm code box goes away
-  function staffMode() {
-    const staff = STAFF_MAIL.test($("email").value.trim());
-    $("ref-wrap").classList.toggle("hidden", staff);
-    $("ref").required = !staff;
-    $("signin-sub").textContent = staff ? "Opus Juris staff." : "Your firm's Opus Juris account.";
-    return staff;
-  }
-  $("email").addEventListener("input", staffMode);
   $("form-ref").addEventListener("submit", async (e) => {
     e.preventDefault();
     $("signin-err").textContent = "";
-    const staff = staffMode();
-    pending = { ref: staff ? "" : $("ref").value.trim().toUpperCase(), email: $("email").value.trim().toLowerCase(), staff };
+    pending = { ref: $("ref").value.trim().toUpperCase(), email: $("email").value.trim().toLowerCase(), staff: false };
     $("send").disabled = true;
     try {
-      await call("request-code", pending, false);
+      // the server says whether this pair is staff (the staff code and an owner's email)
+      const j = await call("request-code", { ref: pending.ref, email: pending.email }, false);
+      pending.staff = !!j.staff;
       $("sent-to").textContent = pending.email;
       $("form-ref").classList.add("hidden");
       $("form-code").classList.remove("hidden");

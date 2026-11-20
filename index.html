@@ -236,7 +236,6 @@
   .acct-list td .sub-line, .inv-list td .sub-line { display: block; color: var(--muted); font-size: .8rem; }
   .acct-list th, .inv-list th, .acct-list .tag, .inv-list .tag { white-space: nowrap; }
   .inv-list td.act { text-align: right; } .inv-list .tag { margin-left: 6px; } .inv-list th.num, .inv-list td.num { padding-right: 18px; }
-  .signin-sub { min-height: 1.5em; }
   .acct-list th.num, .acct-list td.num { padding-right: 18px; }
   .acct-list tr[data-ref] { cursor: pointer; } .acct-list tr[data-ref]:hover td { background: var(--tint); }
   @media (max-width: 900px) {
@@ -260,11 +259,9 @@
     <div class="box">
       <form id="form-ref">
         <h1>Sign in</h1>
-        <p class="signin-sub" id="signin-sub">Your firm's Opus Juris account.</p>
-        <div id="ref-wrap">
+        <p>Your firm's Opus Juris account.</p>
         <label for="ref">Firm code</label>
         <input id="ref" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
-        </div>
         <label for="email">Email</label>
         <input id="email" type="email" autocomplete="email" required>
         <button class="btn" id="send">Continue</button>
@@ -407,6 +404,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
   <script src="config.js?v=3"></script>
-  <script src="app.js?v=40"></script>
+  <script src="app.js?v=41"></script>
 </body>
 </html>
